@@ -1,0 +1,5 @@
+#set($layout = "/templates/governance/layout/search.vm")
+[#foreach($service in $services)
+    #if ($velocityCount > 1),#end
+"$service"
+#end]
