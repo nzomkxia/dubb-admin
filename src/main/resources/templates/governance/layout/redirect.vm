@@ -10,6 +10,6 @@
     <script type="text/javascript" src="$rootContextPath.getURI("js/box.js")"></script>
 </head>
 <body>
-    $screen_placeholder
+    $screen_content
 </body>
 </html>

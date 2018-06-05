@@ -7,35 +7,35 @@
         <a href="#" onclick="if(! hasCheckbox('ids')) { showAlert('#springMessage(
             "empty.list")'); } else if(! hasChecked('ids')) { showAlert('#springMessage(
             "please.select")'); } else { showConfirm('#springMessage(
-            "confirm.batch.weight.doubling")', 'providers/' + getChecked('ids') + '/doubling');} return false;"><img
+            "confirm.batch.weight.doubling")', 'providers/doubling?ids=' + getChecked('ids') );} return false;"><img
                 src="$rootContextPath.getURI("images/ico_up.png")" width="12" height="12"/><span
                 class="ico_font">#springMessage("batch.weight.doubling")</span></a>
         <span class="ico_line">|</span>
         <a href="#" onclick="if(! hasCheckbox('ids')) { showAlert('#springMessage(
             "empty.list")'); } else if(! hasChecked('ids')) { showAlert('#springMessage(
             "please.select")'); } else { showConfirm('#springMessage(
-            "confirm.batch.weight.halving")', 'providers/' + getChecked('ids') + '/halving');} return false;"><img
+            "confirm.batch.weight.halving")', 'providers/halving?ids=' + getChecked('ids') );} return false;"><img
                 src="$rootContextPath.getURI("images/ico_down.png")" width="12" height="12"/><span
                 class="ico_font">#springMessage("batch.weight.halving")</span></a>
         <span class="ico_line">|</span>
         <a href="#" onclick="if(! hasCheckbox('ids')) { showAlert('#springMessage(
             "empty.list")'); } else if(! hasChecked('ids')) { showAlert('#springMessage(
             "please.select")'); } else { showConfirm('#springMessage(
-            "confirm.batch.disable")', 'providers/' + getChecked('ids') + '/disable');} return false;"><img
+            "confirm.batch.disable")', 'providers/disable?ids=' + getChecked('ids') );} return false;"><img
                 src="$rootContextPath.getURI("images/ico_disable.png")" width="12" height="12"/><span
                 class="ico_font">#springMessage("batch.disable")</span></a>
         <span class="ico_line">|</span>
         <a href="#" onclick="if(! hasCheckbox('ids')) { showAlert('#springMessage(
             "empty.list")'); } else if(! hasChecked('ids')) { showAlert('#springMessage(
             "please.select")'); } else { showConfirm('#springMessage(
-            "confirm.batch.enable")', 'providers/' + getChecked('ids') + '/enable');} return false;"><img
+            "confirm.batch.enable")', 'providers/enable?ids=' + getChecked('ids') );} return false;"><img
                 src="$rootContextPath.getURI("images/ico_enable.png")" width="12" height="12"/><span
                 class="ico_font">#springMessage("batch.enable")</span></a>
         <span class="ico_line">|</span>
         <a href="#" onclick="if(! hasCheckbox('ids')) { showAlert('#springMessage(
             "empty.list")'); } else if(! hasChecked('ids')) { showAlert('#springMessage(
             "please.select")'); } else { showConfirm('#springMessage(
-            "confirm.batch.delete")', 'providers/' + getChecked('ids') + '/delete'); } return false;"><img
+            "confirm.batch.delete")', 'providers/delete?ids=' + getChecked('ids')); } return false;"><img
                 src="$rootContextPath.getURI("images/ico_delete.png")" width="12" height="12"/><span
                 class="ico_font">#springMessage("batch.delete")</span></a>
     #end
@@ -80,7 +80,7 @@
         <tr>
             <td><input type="checkbox" name="ids" value="$provider.id"/></td>
             <td>
-                <a href="providers/$provider.id">#if($address)$tool.getSimpleName($provider.service)#else$provider.address#end</a>
+                <a href="providers/show/?id=$provider.id">#if($address)$tool.getSimpleName($provider.service)#else$provider.address#end</a>
             </td>
             <td>$tool.getProviderWeight($provider)</td>
             <td>#if($provider.dynamic)<font color="green">#springMessage("dynamic")</font>#else<font color="blue">#springMessage(
@@ -123,39 +123,39 @@
             #if($currentUser.role != "G")
                 <td>
                     #if($currentUser.hasServicePrivilege($provider.service))
-                        <a href="providers/$provider.id/edit"><img src="$rootContextPath.getURI("images/ico_edit.png")"
+                        <a href="providers/edit?id=$provider.id"><img src="$rootContextPath.getURI("images/ico_edit.png")"
                                                                    width="12" height="12"/><span
                                 class="ico_font">#springMessage("edit")</span></a>
                         <span class="ico_line">|</span>
-                        <a href="providers/$provider.id/add"><img src="$rootContextPath.getURI("images/ico_add.png")"
+                        <a href="providers/add?id=$provider.id"><img src="$rootContextPath.getURI("images/ico_add.png")"
                                                                   width="12" height="12"/><span
                                 class="ico_font">#springMessage("copy")</span></a>
                         <span class="ico_line">|</span>
                         <a href="#" onclick="showConfirm('#springMessage(
-                            "confirm.weight.doubling")', '$provider.url', 'providers/$provider.id/doubling'); return false;"><img
+                            "confirm.weight.doubling")', '$provider.url', 'providers/doubling?ids=$provider.id'); return false;"><img
                                 src="$rootContextPath.getURI("images/ico_up.png")" width="12" height="12"/><span
                                 class="ico_font">#springMessage("weight.doubling")</span></a>
                         <span class="ico_line">|</span>
                         <a href="#" onclick="showConfirm('#springMessage(
-                            "confirm.weight.halving")', '$provider.url', 'providers/$provider.id/halving'); return false;"><img
+                            "confirm.weight.halving")', '$provider.url', 'providers/halving?ids=$provider.id'); return false;"><img
                                 src="$rootContextPath.getURI("images/ico_down.png")" width="12" height="12"/><span
                                 class="ico_font">#springMessage("weight.halving")</span></a>
                         <span class="ico_line">|</span>
                         #if($tool.isProviderEnabled($provider))
                             <a href="#" onclick="showConfirm('#springMessage(
-                                "confirm.disable")', '$provider.url', 'providers/$provider.id/disable'); return false;"><img
+                                "confirm.disable")', '$provider.url', 'providers/disable?ids=$provider.id'); return false;"><img
                                     src="$rootContextPath.getURI("images/ico_disable.png")" width="12"
                                     height="12"/><span class="ico_font">#springMessage("disable")</span></a>
                         #else
                             <a href="#" onclick="showConfirm('#springMessage(
-                                "confirm.enable")', '$provider.url', 'providers/$provider.id/enable'); return false;"><img
+                                "confirm.enable")', '$provider.url', 'providers/enable?ids=$provider.id'); return false;"><img
                                     src="$rootContextPath.getURI("images/ico_enable.png")" width="12" height="12"/><span
                                     class="ico_font">#springMessage("enable")</span></a>
                         #end
                         #if(! $provider.dynamic)
                             <span class="ico_line">|</span>
                             <a href="#" onclick="showConfirm('#springMessage(
-                                "confirm.delete")', '$provider.url', 'providers/$provider.id/delete'); return false;"><img
+                                "confirm.delete")', '$provider.url', 'providers/delete?ids=$provider.id'); return false;"><img
                                     src="$rootContextPath.getURI("images/ico_delete.png")" width="12" height="12"/><span
                                     class="ico_font">#springMessage("delete")</span></a>
                         #end

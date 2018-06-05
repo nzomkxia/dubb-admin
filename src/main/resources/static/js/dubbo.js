@@ -166,7 +166,7 @@ function getChecked(name) {
     for (var i = 0; i < checkboxs.length; i++) {
         if (checkboxs[i].checked) {
             if (result.length > 0) {
-                result = result + "+";
+                result = result + ",";
             }
             result = result + checkboxs[i].value;
         }

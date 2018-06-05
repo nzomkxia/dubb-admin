@@ -47,10 +47,14 @@ import com.alibaba.dubboadmin.registry.common.route.RouteRule;
 import com.alibaba.dubboadmin.registry.common.route.RouteRule.MatchPair;
 import com.alibaba.dubboadmin.registry.common.util.StringEscapeUtils;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 /**
  * Tool
  *
  */
+@Component
 public class Tool {
 
     private static final Comparator<String> SIMPLE_NAME_COMPARATOR = new Comparator<String>() {
@@ -69,7 +73,9 @@ public class Tool {
             return s1.compareToIgnoreCase(s2);
         }
     };
+    @Autowired
     private OverrideService overrideService;
+    @Autowired
     private RouteService routeService;
 
     public static String toStackTraceString(Throwable t) {
