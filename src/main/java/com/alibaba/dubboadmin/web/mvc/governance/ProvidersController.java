@@ -36,9 +36,11 @@ import com.alibaba.dubboadmin.registry.common.route.OverrideUtils;
 import com.alibaba.dubboadmin.web.mvc.BaseController;
 import com.alibaba.dubboadmin.web.pulltool.Tool;
 
+import jdk.nashorn.internal.ir.BlockLexicalContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -86,6 +88,8 @@ public class ProvidersController extends BaseController {
     @Autowired
     private OverrideService overrideService;
 
+
+
     @RequestMapping("")
     public String index(HttpServletRequest request, HttpServletResponse response, Model model,
                       @RequestParam(required = false) String service,
@@ -124,7 +128,6 @@ public class ProvidersController extends BaseController {
 
         model.addAttribute("providers", providers);
         model.addAttribute("serviceAppMap", getServiceAppMap(providers));
-        model.addAttribute("tool", new Tool());
 
         // record search history to cookies
         setSearchHistroy(value, request, response);
@@ -189,14 +192,15 @@ public class ProvidersController extends BaseController {
     }
 
     @RequestMapping("/show")
-    public String show(@RequestParam Long id, Model model) {
+    public String show(@RequestParam Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "show", "providers");
         Provider provider = providerService.findProvider(id);
         if (provider != null && provider.isDynamic()) {
             List<Override> overrides = overrideService.findByServiceAndAddress(provider.getService(), provider.getAddress());
             OverrideUtils.setProviderOverrides(provider, overrides);
         }
         model.addAttribute("provider", provider);
-        return "governance/screen/show";
+        return "governance/screen/providers/show";
     }
 
     /**
@@ -228,16 +232,26 @@ public class ProvidersController extends BaseController {
     }
 
     @RequestMapping("/edit")
-    public void edit(@RequestParam Long id, Model model) {
-        show(id, model);
+    public String edit(@RequestParam Long id, HttpServletRequest request, HttpServletResponse response,  Model model) {
+        prepare(request, response, model,"edit", "providers");
+        boolean success = true;
+        Provider provider = providerService.findProvider(id);
+        if (provider != null && provider.isDynamic()) {
+            List<Override> overrides = overrideService.findByServiceAndAddress(provider.getService(), provider.getAddress());
+            OverrideUtils.setProviderOverrides(provider, overrides);
+        }
+        model.addAttribute("provider", provider);
+        return "governance/screen/providers/edit";
     }
 
     @RequestMapping(value =  "/create", method = RequestMethod.POST)  //post
-    public boolean create(@ModelAttribute Provider provider, Model model) {
+    public String create(@ModelAttribute Provider provider, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model,"create" ,"providers");
+        boolean success = true;
         String service = provider.getService();
         if (!super.currentUser.hasServicePrivilege(service)) {
             model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
-            return false;
+            success = false;
         }
         if (provider.getParameters() == null) {
             String url = provider.getUrl();
@@ -251,22 +265,26 @@ public class ProvidersController extends BaseController {
         }
         provider.setDynamic(false); // Provider add through web page must be static
         providerService.create(provider);
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/providers");
+        return "governance/screen/redirect";
     }
 
     @RequestMapping(value = "/update", method = RequestMethod.POST) //post
-    public boolean update(@ModelAttribute Provider newProvider, Model model) {
+    public String update(@ModelAttribute Provider newProvider, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "update", "providers");
+        boolean success = true;
         Long id = newProvider.getId();
         String parameters = newProvider.getParameters();
         Provider provider = providerService.findProvider(id);
         if (provider == null) {
             model.addAttribute("message", getMessage("NoSuchOperationData", id));
-            return false;
+            success = false;
         }
         String service = provider.getService();
         if (!super.currentUser.hasServicePrivilege(service)) {
             model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
-            return false;
+            success = false;
         }
         Map<String, String> oldMap = StringUtils.parseQueryString(provider.getParameters());
         Map<String, String> newMap = StringUtils.parseQueryString(parameters);
@@ -304,102 +322,124 @@ public class ProvidersController extends BaseController {
             provider.setParameters(parameters);
             providerService.updateProvider(provider);
         }
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/providers");
+        return "governance/screen/redirect";
     }
 
     @RequestMapping("/delete")
-    public boolean delete(@RequestParam Long[] ids, Model model) {
+    public String delete(HttpServletRequest request, HttpServletResponse response, @RequestParam Long[] ids, Model model) {
+        prepare(request, response, model, "delete", "providers");
+        boolean success = true;
         for (Long id : ids) {
             Provider provider = providerService.findProvider(id);
             if (provider == null) {
                 model.addAttribute("message", getMessage("NoSuchOperationData", id));
-                return false;
+                success = false;
             } else if (provider.isDynamic()) {
                 model.addAttribute("message", getMessage("CanNotDeleteDynamicData", id));
-                return false;
+                success = false;
             } else if (!super.currentUser.hasServicePrivilege(provider.getService())) {
                 model.addAttribute("message", getMessage("HaveNoServicePrivilege", provider.getService()));
-                return false;
+                success = false;
             }
         }
         for (Long id : ids) {
             providerService.deleteStaticProvider(id);
         }
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/providers");
+        return "governance/screen/redirect";
     }
 
     @RequestMapping("/enable")
-    public boolean enable(@RequestParam Long[] ids, Model model) {
+    public String enable(HttpServletRequest request, HttpServletResponse response, @RequestParam Long[] ids, Model model) {
+        prepare(request, response, model, "enable", "providers");
+        boolean success = true;
         Map<Long, Provider> id2Provider = new HashMap<Long, Provider>();
         for (Long id : ids) {
             Provider provider = providerService.findProvider(id);
             if (provider == null) {
                 model.addAttribute("message", getMessage("NoSuchOperationData", id));
-                return false;
+                success = false;
             } else if (!super.currentUser.hasServicePrivilege(provider.getService())) {
                 model.addAttribute("message", getMessage("HaveNoServicePrivilege", provider.getService()));
-                return false;
+                success = false;
             }
             id2Provider.put(id, provider);
         }
         for (Long id : ids) {
             providerService.enableProvider(id);
         }
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/providers");
+        return "governance/screen/redirect";
     }
 
     @RequestMapping("/disable")
-    public boolean disable(@RequestParam Long[] ids, Model model) {
+    public String disable(HttpServletRequest request, HttpServletResponse response, @RequestParam Long[] ids, Model model) {
+        prepare(request, response, model, "disable", "providers");
+        boolean success = true;
         for (Long id : ids) {
             Provider provider = providerService.findProvider(id);
             if (provider == null) {
                 model.addAttribute("message", getMessage("NoSuchOperationData", id));
-                return false;
+                success = false;
             } else if (!super.currentUser.hasServicePrivilege(provider.getService())) {
+                success = false;
                 model.addAttribute("message", getMessage("HaveNoServicePrivilege", provider.getService()));
-                return false;
             }
         }
         for (Long id : ids) {
             providerService.disableProvider(id);
         }
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/providers");
+        return "governance/screen/redirect";
     }
 
     @RequestMapping("/doubling")
-    public boolean doubling(@RequestParam Long[] ids, Model model) {
+    public String doubling(HttpServletRequest request, HttpServletResponse response, @RequestParam Long[] ids, Model model) {
+        prepare(request, response, model, "doubling","providers");
+        boolean success = true;
         for (Long id : ids) {
             Provider provider = providerService.findProvider(id);
             if (provider == null) {
+                success = false;
                 model.addAttribute("message", getMessage("NoSuchOperationData", id));
-                return false;
             } else if (!super.currentUser.hasServicePrivilege(provider.getService())) {
+                success = false;
                 model.addAttribute("message", getMessage("HaveNoServicePrivilege", provider.getService()));
-                return false;
             }
         }
         for (Long id : ids) {
             providerService.doublingProvider(id);
         }
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/providers");
+        return "governance/screen/redirect";
     }
 
     @RequestMapping("/halving")
-    public boolean halving(@RequestParam Long[] ids, Model model) {
+    public String halving(HttpServletRequest request, HttpServletResponse response, @RequestParam Long[] ids, Model model) {
+        prepare(request, response, model, "halving","providers");
+        boolean success = true;
         for (Long id : ids) {
             Provider provider = providerService.findProvider(id);
             if (provider == null) {
+                success = false;
                 model.addAttribute("message", getMessage("NoSuchOperationData", id));
-                return false;
             } else if (!super.currentUser.hasServicePrivilege(provider.getService())) {
+                success = false;
                 model.addAttribute("message", getMessage("HaveNoServicePrivilege", provider.getService()));
-                return false;
             }
         }
         for (Long id : ids) {
             providerService.halvingProvider(id);
         }
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/providers");
+        return "governance/screen/redirect";
     }
 
 }

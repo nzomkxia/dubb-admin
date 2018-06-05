@@ -34,7 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class AbstractService {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractService.class);
-    //@Autowired
+    @Autowired
     protected RegistryService registryService;
     @Autowired
     private RegistryServerSync sync;
