@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.jws.WebParam.Mode;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -46,8 +47,11 @@ import com.alibaba.dubboadmin.web.pulltool.Tool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import sun.awt.ModalityListener;
 
 /**
  * ConsumersController. URI: /services/$service/consumers
@@ -118,7 +122,13 @@ public class ConsumersController extends BaseController {
     }
 
     @RequestMapping("/show")
-    public void show(Long id, Map<String, Object> context) {
+    public String show(@RequestParam Long id, @RequestParam(required = false) String methodName,
+                       HttpServletRequest request, HttpServletResponse response, Model model) {
+        if (methodName == null) {
+            prepare(request, response, model, "show", "consumers");
+        } else {
+            prepare(request, response, model, methodName, "consumers");
+        }
         Consumer consumer = consumerService.findConsumer(id);
         List<Provider> providers = providerService.findByService(consumer.getService());
         List<Route> routes = routeService.findByService(consumer.getService());
@@ -127,30 +137,50 @@ public class ConsumersController extends BaseController {
         consumer.setProviders(RouteUtils.route(consumer.getService(), consumer.getAddress(), consumer.getParameters(), providers, overrides, routes, null, routed));
         consumer.setRoutes(routed);
         OverrideUtils.setConsumerOverrides(consumer, overrides);
-        context.put("consumer", consumer);
-        context.put("providers", consumer.getProviders());
-        context.put("routes", consumer.getRoutes());
-        context.put("overrides", consumer.getOverrides());
+        model.addAttribute("consumer", consumer);
+        model.addAttribute("providers", consumer.getProviders());
+        model.addAttribute("routes", consumer.getRoutes());
+        model.addAttribute("overrides", consumer.getOverrides());
+        if (methodName == null) {
+            return "governance/screen/consumers/show";
+        } else {
+            return "governance/screen/consumers/" + methodName;
+        }
     }
 
     @RequestMapping("/edit")
-    public void edit(Long id, Map<String, Object> context) {
-        show(id, context);
+    public String edit(@RequestParam Long id, HttpServletRequest request, HttpServletResponse response,  Model model) {
+        prepare(request, response, model, "edit", "consumers");
+        Consumer consumer = consumerService.findConsumer(id);
+        List<Provider> providers = providerService.findByService(consumer.getService());
+        List<Route> routes = routeService.findByService(consumer.getService());
+        List<Override> overrides = overrideService.findByService(consumer.getService());
+        List<Route> routed = new ArrayList<Route>();
+        consumer.setProviders(RouteUtils.route(consumer.getService(), consumer.getAddress(), consumer.getParameters(), providers, overrides, routes, null, routed));
+        consumer.setRoutes(routed);
+        OverrideUtils.setConsumerOverrides(consumer, overrides);
+        model.addAttribute("consumer", consumer);
+        model.addAttribute("providers", consumer.getProviders());
+        model.addAttribute("routes", consumer.getRoutes());
+        model.addAttribute("overrides", consumer.getOverrides());
+        return "governance/screen/consumers/edit";
     }
 
-    @RequestMapping("/update")
-    public boolean update(Consumer newConsumer, Map<String, Object> context) {
+    @RequestMapping(value = "/update", method = RequestMethod.POST) //post
+    public String update(@ModelAttribute Consumer newConsumer, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "update", "consumers");
+        boolean success = true;
         Long id = newConsumer.getId();
         String parameters = newConsumer.getParameters();
         Consumer consumer = consumerService.findConsumer(id);
         if (consumer == null) {
-            context.put("message", getMessage("NoSuchOperationData", id));
-            return false;
+            model.addAttribute("message", getMessage("NoSuchOperationData", id));
+            success = false;
         }
         String service = consumer.getService();
         if (!super.currentUser.hasServicePrivilege(service)) {
-            context.put("message", getMessage("HaveNoServicePrivilege", service));
-            return false;
+            model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
+            success = false;
         }
         Map<String, String> oldMap = StringUtils.parseQueryString(consumer.getParameters());
         Map<String, String> newMap = StringUtils.parseQueryString(parameters);
@@ -183,37 +213,48 @@ public class ConsumersController extends BaseController {
             override.setOperatorAddress(operatorAddress);
             overrideService.saveOverride(override);
         }
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/consumers");
+        return "governance/screen/redirect";
     }
 
-    public void routed(Long id, Map<String, Object> context) {
-        show(id, context);
+    @RequestMapping("/routed")
+    public String routed(@RequestParam Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+        return show(id, "routed", request, response, model);
     }
 
-    public void notified(Long id, Map<String, Object> context) {
-        show(id, context);
+    @RequestMapping("/notified")
+    public String notified(@RequestParam Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+        return show(id, "notified", request, response, model);
     }
 
-    public void overrided(Long id, Map<String, Object> context) {
-        show(id, context);
+    @RequestMapping("/overrided")
+    public String overrided(@RequestParam Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+        return show(id, "overrided", request, response, model);
     }
 
-    public boolean shield(Long[] ids, Map<String, Object> context) throws Exception {
-        return mock(ids, context, "force:return null");
+    @RequestMapping("/shield")
+    public String shield(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        return mock(ids, "force:return null", "shield", request, response, model);
     }
 
-    public boolean tolerant(Long[] ids, Map<String, Object> context) throws Exception {
-        return mock(ids, context, "fail:return null");
+    @RequestMapping("/tolerant")
+    public String tolerant(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        return mock(ids, "fail:return null", "tolerant", request, response, model);
     }
 
-    public boolean recover(Long[] ids, Map<String, Object> context) throws Exception {
-        return mock(ids, context, "");
+    @RequestMapping("/recover")
+    public String recover(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        return mock(ids,  "", "recover", request, response, model);
     }
 
-    private boolean mock(Long[] ids, Map<String, Object> context, String mock) throws Exception {
+    private String mock(Long[] ids, String mock, String methodName, HttpServletRequest request,
+                         HttpServletResponse response, Model model) throws Exception {
+        prepare(request, response, model, methodName, "consumers");
+        boolean success = true;
         if (ids == null || ids.length == 0) {
-            context.put("message", getMessage("NoSuchOperationData"));
-            return false;
+            model.addAttribute("message", getMessage("NoSuchOperationData"));
+            success = false;
         }
         List<Consumer> consumers = new ArrayList<Consumer>();
         for (Long id : ids) {
@@ -221,8 +262,8 @@ public class ConsumersController extends BaseController {
             if (c != null) {
                 consumers.add(c);
                 if (!super.currentUser.hasServicePrivilege(c.getService())) {
-                    context.put("message", getMessage("HaveNoServicePrivilege", c.getService()));
-                    return false;
+                    model.addAttribute("message", getMessage("HaveNoServicePrivilege", c.getService()));
+                    success = false;
                 }
             }
         }
@@ -259,30 +300,39 @@ public class ConsumersController extends BaseController {
                 overrideService.saveOverride(override);
             }
         }
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/consumers");
+        return "governance/screen/redirect";
     }
 
-    public boolean allshield(Map<String, Object> context) throws Exception {
-        return allmock(context, "force:return null");
+    @RequestMapping("/allshield")
+    public String allshield(@RequestParam(required = false) String service, HttpServletRequest request,
+                                                   HttpServletResponse response, Model model) throws Exception {
+        return allmock(service,  "force:return null", "allshield",request, response, model);
     }
 
-    public boolean alltolerant(Map<String, Object> context) throws Exception {
-        return allmock(context, "fail:return null");
+    @RequestMapping("/alltolerant")
+    public String alltolerant(@RequestParam(required = false) String service, HttpServletRequest request,
+                               HttpServletResponse response, Model model) throws Exception {
+        return allmock(service, "fail:return null", "alltolerant", request, response, model);
     }
 
-    public boolean allrecover(Map<String, Object> context) throws Exception {
-        return allmock(context, "");
+    @RequestMapping("/allrecover")
+    public String allrecover(@RequestParam(required = false) String service, HttpServletRequest request,
+                              HttpServletResponse response, Model model) throws Exception {
+        return allmock(service, "", "allrecover", request, response, model);
     }
 
-    private boolean allmock(Map<String, Object> context, String mock) throws Exception {
-        String service = (String) context.get("service");
+    private String allmock(String service, String mock, String methodName, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        prepare(request, response, model, methodName,"consumers");
+        boolean success = true;
         if (service == null || service.length() == 0) {
-            context.put("message", getMessage("NoSuchOperationData"));
-            return false;
+            model.addAttribute("message", getMessage("NoSuchOperationData"));
+            success = false;
         }
         if (!super.currentUser.hasServicePrivilege(service)) {
-            context.put("message", getMessage("HaveNoServicePrivilege", service));
-            return false;
+            model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
+            success = false;
         }
         List<Override> overrides = overrideService.findByService(service);
         Override allOverride = null;
@@ -319,29 +369,38 @@ public class ConsumersController extends BaseController {
             override.setOperatorAddress(operatorAddress);
             overrideService.saveOverride(override);
         }
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/consumers");
+        return "governance/screen/redirect";
     }
 
-    public boolean allow(Long[] ids, Map<String, Object> context) throws Exception {
-        return access(ids, context, true, false);
+    @RequestMapping("/allow")
+    public String allow(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        return access(request, response, ids, model, true, false, "allow");
     }
 
-    public boolean forbid(Long[] ids, Map<String, Object> context) throws Exception {
-        return access(ids, context, false, false);
+    @RequestMapping("/forbid")
+    public String forbid(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        return access(request, response, ids, model, false, false, "forbid");
     }
 
-    public boolean onlyallow(Long[] ids, Map<String, Object> context) throws Exception {
-        return access(ids, context, true, true);
+    @RequestMapping("/onlyallow")
+    public String onlyallow(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        return access(request, response, ids, model, true, true, "onlyallow");
     }
 
-    public boolean onlyforbid(Long[] ids, Map<String, Object> context) throws Exception {
-        return access(ids, context, false, true);
+    @RequestMapping("/onlyforbid")
+    public String onlyforbid(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        return access(request, response, ids, model, false, true, "onlyforbid");
     }
 
-    private boolean access(Long[] ids, Map<String, Object> context, boolean allow, boolean only) throws Exception {
+    private String access(HttpServletRequest request, HttpServletResponse response, Long[] ids,
+                           Model model, boolean allow, boolean only, String methodName) throws Exception {
+        prepare(request, response, model, methodName, "consumers");
+        boolean success = true;
         if (ids == null || ids.length == 0) {
-            context.put("message", getMessage("NoSuchOperationData"));
-            return false;
+            model.addAttribute("message", getMessage("NoSuchOperationData"));
+            success = false;
         }
         List<Consumer> consumers = new ArrayList<Consumer>();
         for (Long id : ids) {
@@ -349,8 +408,8 @@ public class ConsumersController extends BaseController {
             if (c != null) {
                 consumers.add(c);
                 if (!super.currentUser.hasServicePrivilege(c.getService())) {
-                    context.put("message", getMessage("HaveNoServicePrivilege", c.getService()));
-                    return false;
+                    model.addAttribute("message", getMessage("HaveNoServicePrivilege", c.getService()));
+                    success = false;
                 }
             }
         }
@@ -431,6 +490,8 @@ public class ConsumersController extends BaseController {
                 routeService.deleteRoute(route.getId());
             }
         }
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/consumers");
+        return "governance/screen/redirect";
     }
 }

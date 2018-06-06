@@ -117,7 +117,7 @@
                                     "show" || $_method == "add" || $_method == "addMock")../../#elseif($_method ==
                                     "edit" || $_method == "editMock" || $_method == "routed" || $_method ==
                                     "notified" || $_method == "preview" || $_method == "routeselect" || $_method ==
-                                    "testrun" || $_method == "notified")../../../#{end}$tab';">#springMessage($tab)</li>
+                                    "testrun" || $_method == "notified")../#{end}$tab';">#springMessage($tab)</li>
                         #end
                     #end
                 </ul>
