@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.jws.WebParam.Mode;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -45,6 +46,7 @@ import com.alibaba.dubboadmin.web.pulltool.Tool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -137,6 +139,8 @@ public class RoutesController extends BaseController {
     @RequestMapping("")
     public String index(@RequestParam(required = false) String service,
                       @RequestParam(required = false) String address,
+                        @RequestParam(required = false) String app,
+                        @RequestParam(required = false) String keyWord,
                       HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "routes");
         address = Tool.getIP(address);
@@ -158,17 +162,18 @@ public class RoutesController extends BaseController {
     /**
      * Display routing details
      *
-     * @param context
      */
-    public void show(Map<String, Object> context) {
+    @RequestMapping("/{id}")
+    public String show(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
         try {
-            Route route = routeService.findRoute(Long.parseLong((String) context.get("id")));
+            prepare(request, response, model, "show", "routes");
+            Route route = routeService.findRoute(id);
 
             if (route == null) {
                 throw new IllegalArgumentException("The route is not existed.");
             }
             if (route.getService() != null && !route.getService().isEmpty()) {
-                context.put("service", route.getService());
+                model.addAttribute("service", route.getService());
             }
 
             RouteRule routeRule = RouteRule.parse(route);
@@ -189,19 +194,20 @@ public class RoutesController extends BaseController {
 
                     if (!matchPair.getMatches().isEmpty()) {
                         String m = RouteRule.join(matchPair.getMatches());
-                        context.put(name[1], m);
+                        model.addAttribute(name[1], m);
                     }
                     if (!matchPair.getUnmatches().isEmpty()) {
                         String u = RouteRule.join(matchPair.getUnmatches());
-                        context.put(name[2], u);
+                        model.addAttribute(name[2], u);
                     }
                 }
             }
-            context.put("route", route);
-            context.put("methods", CollectionUtils.sort(new ArrayList<String>(providerService.findMethodsByService(route.getService()))));
+            model.addAttribute("route", route);
+            model.addAttribute("methods", CollectionUtils.sort(new ArrayList<String>(providerService.findMethodsByService(route.getService()))));
         } catch (ParseException e) {
             e.printStackTrace();
         }
+        return "governance/screen/routes/show";
     }
 
     /**
@@ -223,28 +229,87 @@ public class RoutesController extends BaseController {
 
         if (input != null) model.addAttribute("input", input);
         return "governance/screen/routes/add";
-
     }
 
     /**
      * Load modified routing page
      *
-     * @param context
      */
-    public void edit(Map<String, Object> context) {
-        //add(context);
-        //show(context);
+
+    @RequestMapping("/{id}/edit")
+    public String edit(@PathVariable("id") Long id, @RequestParam(required = false) String service,
+                     @RequestParam(required = false) String input,
+                     HttpServletRequest request, HttpServletResponse response, Model model) {
+
+        prepare(request, response, model, "edit", "routes");
+        if (service != null && service.length() > 0 && !service.contains("*")) {
+            model.addAttribute("service", service);
+            model.addAttribute("methods", CollectionUtils.sort(new ArrayList<String>(providerService.findMethodsByService(service))));
+        } else {
+            List<String> serviceList = Tool.sortSimpleName(new ArrayList<String>(providerService.findServices()));
+            model.addAttribute("serviceList", serviceList);
+        }
+
+        if (input != null) model.addAttribute("input", input);
+        Route route = routeService.findRoute(id);
+
+        if (route == null) {
+            throw new IllegalArgumentException("The route is not existed.");
+        }
+        if (route.getService() != null && !route.getService().isEmpty()) {
+            model.addAttribute("service", route.getService());
+        }
+
+        RouteRule routeRule = null;
+        try {
+            routeRule = RouteRule.parse(route);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<String, RouteRule.MatchPair>[] paramArray = new Map[]{
+            routeRule.getWhenCondition(), routeRule.getThenCondition()};
+        String[][][] namesArray = new String[][][]{when_names, then_names};
+
+        for (int i = 0; i < paramArray.length; ++i) {
+            Map<String, RouteRule.MatchPair> param = paramArray[i];
+            String[][] names = namesArray[i];
+            for (String[] name : names) {
+                RouteRule.MatchPair matchPair = param.get(name[0]);
+                if (matchPair == null) {
+                    continue;
+                }
+
+                if (!matchPair.getMatches().isEmpty()) {
+                    String m = RouteRule.join(matchPair.getMatches());
+                    model.addAttribute(name[1], m);
+                }
+                if (!matchPair.getUnmatches().isEmpty()) {
+                    String u = RouteRule.join(matchPair.getUnmatches());
+                    model.addAttribute(name[2], u);
+                }
+            }
+        }
+        model.addAttribute("route", route);
+        model.addAttribute("methods", CollectionUtils.sort(new ArrayList<String>(providerService.findMethodsByService(route.getService()))));
+
+        return "governance/screen/routes/edit";
     }
 
     /**
      * Save the routing information to the database
      *
-     * @param context
      * @return
      */
-    public boolean create(Map<String, Object> context) {
-        String name = (String) context.get("name");
-        String service = (String) context.get("service");
+
+    @RequestMapping("/create")
+    public String create(HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "update", "routes");
+        boolean success = true;
+
+        String name = request.getParameter("name");
+        String service = request.getParameter("service");
         if (StringUtils.isNotEmpty(service)
                 && StringUtils.isNotEmpty(name)) {
             checkService(service);
@@ -252,15 +317,15 @@ public class RoutesController extends BaseController {
             Map<String, String> when_name2valueList = new HashMap<String, String>();
             Map<String, String> notWhen_name2valueList = new HashMap<String, String>();
             for (String[] names : when_names) {
-                when_name2valueList.put(names[0], (String) context.get(names[1]));
-                notWhen_name2valueList.put(names[0], (String) context.get(names[2])); // TODO. We should guarantee value is never null in here, will be supported later
+                when_name2valueList.put(names[0],  request.getParameter(names[1]));
+                notWhen_name2valueList.put(names[0], request.getParameter(names[2])); // TODO. We should guarantee value is never null in here, will be supported later
             }
 
             Map<String, String> then_name2valueList = new HashMap<String, String>();
             Map<String, String> notThen_name2valueList = new HashMap<String, String>();
             for (String[] names : then_names) {
-                then_name2valueList.put(names[0], (String) context.get(names[1]));
-                notThen_name2valueList.put(names[0], (String) context.get(names[2]));
+                then_name2valueList.put(names[0], request.getParameter(names[1]));
+                notThen_name2valueList.put(names[0], request.getParameter(names[2]));
             }
 
             RouteRule routeRule = RouteRule.createFromNameAndValueListString(
@@ -268,8 +333,10 @@ public class RoutesController extends BaseController {
                     then_name2valueList, notThen_name2valueList);
 
             if (routeRule.getThenCondition().isEmpty()) {
-                context.put("message", getMessage("Add route error! then is empty."));
-                return false;
+                model.addAttribute("message", getMessage("Add route error! then is empty."));
+                model.addAttribute("success", false);
+                model.addAttribute("redirect", "governance/routes");
+                return "governance/screen/redirect";
             }
 
             String matchRule = routeRule.getWhenConditionString();
@@ -277,40 +344,47 @@ public class RoutesController extends BaseController {
 
             // Limit the length of the expression
             if (matchRule.length() > MAX_RULE_LENGTH) {
-                context.put("message", getMessage("When rule is too long!"));
-                return false;
+                model.addAttribute("message", getMessage("When rule is too long!"));
+                model.addAttribute("success", false);
+                model.addAttribute("redirect", "governance/routes");
+                return "governance/screen/redirect";
             }
             if (filterRule.length() > MAX_RULE_LENGTH) {
-                context.put("message", getMessage("Then rule is too long!"));
-                return false;
+                model.addAttribute("message", getMessage("Then rule is too long!"));
+                model.addAttribute("success", false);
+                model.addAttribute("redirect", "governance/routes");
+                return "governance/screen/redirect";
             }
 
             Route route = new Route();
             route.setService(service);
             route.setName(name);
-            route.setUsername((String) context.get("operator"));
-            route.setOperator((String) context.get("operatorAddress"));
+            route.setUsername(request.getParameter("operator"));
+            route.setOperator(request.getParameter("operatorAddress"));
             route.setRule(routeRule.toString());
-            if (StringUtils.isNotEmpty((String) context.get("priority"))) {
-                route.setPriority(Integer.parseInt((String) context.get("priority")));
+            if (StringUtils.isNotEmpty(request.getParameter("priority"))) {
+                route.setPriority(Integer.parseInt(request.getParameter("priority")));
             }
             routeService.createRoute(route);
 
         }
-
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/routes");
+        return "governance/screen/redirect";
     }
 
     /**
      * Save the update data to the database
      *
-     * @param context
      * @return
      */
-    public boolean update(Map<String, Object> context) {
-        String idStr = (String) context.get("id");
+    @RequestMapping("/{id}/update")
+    public boolean update(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "update", "routes");
+        String idStr = String.valueOf(id);
         if (idStr != null && idStr.length() > 0) {
-            String[] blacks = (String[]) context.get("black");
+            String[] blacks = request.getParameterMap().get("black");
+            //String[] blacks = (String[]) context.get("black");
             boolean black = false;
             if (blacks != null && blacks.length > 0) {
                 black = true;
@@ -318,29 +392,29 @@ public class RoutesController extends BaseController {
 
             Route oldRoute = routeService.findRoute(Long.valueOf(idStr));
             if (null == oldRoute) {
-                context.put("message", getMessage("NoSuchRecord"));
+                model.addAttribute("message", getMessage("NoSuchRecord"));
                 return false;
             }
             // Check parameters, patchwork rule
-            if (StringUtils.isNotEmpty((String) context.get("name"))) {
+            if (StringUtils.isNotEmpty((String) request.getParameter("name"))) {
                 String service = oldRoute.getService();
-                if (context.get("operator") == null) {
-                    context.put("message", getMessage("HaveNoServicePrivilege", service));
+                if (request.getParameter("operator") == null) {
+                    model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
                     return false;
                 }
 
                 Map<String, String> when_name2valueList = new HashMap<String, String>();
                 Map<String, String> notWhen_name2valueList = new HashMap<String, String>();
                 for (String[] names : when_names) {
-                    when_name2valueList.put(names[0], (String) context.get(names[1]));
-                    notWhen_name2valueList.put(names[0], (String) context.get(names[2]));
+                    when_name2valueList.put(names[0], (String) request.getParameter(names[1]));
+                    notWhen_name2valueList.put(names[0], (String) request.getParameter(names[2]));
                 }
 
                 Map<String, String> then_name2valueList = new HashMap<String, String>();
                 Map<String, String> notThen_name2valueList = new HashMap<String, String>();
                 for (String[] names : then_names) {
-                    then_name2valueList.put(names[0], (String) context.get(names[1]));
-                    notThen_name2valueList.put(names[0], (String) context.get(names[2]));
+                    then_name2valueList.put(names[0], (String) request.getParameter(names[1]));
+                    notThen_name2valueList.put(names[0], (String) request.getParameter(names[2]));
                 }
 
                 RouteRule routeRule = RouteRule.createFromNameAndValueListString(
@@ -367,7 +441,7 @@ public class RoutesController extends BaseController {
                 }
 
                 if (result.getThenCondition().isEmpty()) {
-                    context.put("message", getMessage("Update route error! then is empty."));
+                    model.addAttribute("message", getMessage("Update route error! then is empty."));
                     return false;
                 }
 
@@ -376,33 +450,33 @@ public class RoutesController extends BaseController {
 
                 // Limit the length of the expression
                 if (matchRule.length() > MAX_RULE_LENGTH) {
-                    context.put("message", getMessage("When rule is too long!"));
+                    model.addAttribute("message", getMessage("When rule is too long!"));
                     return false;
                 }
                 if (filterRule.length() > MAX_RULE_LENGTH) {
-                    context.put("message", getMessage("Then rule is too long!"));
+                    model.addAttribute("message", getMessage("Then rule is too long!"));
                     return false;
                 }
 
                 int priority = 0;
-                if (StringUtils.isNotEmpty((String) context.get("priority"))) {
-                    priority = Integer.parseInt((String) context.get("priority"));
+                if (StringUtils.isNotEmpty((String) request.getParameter("priority"))) {
+                    priority = Integer.parseInt((String) request.getParameter("priority"));
                 }
 
                 Route route = new Route();
                 route.setRule(result.toString());
                 route.setService(service);
                 route.setPriority(priority);
-                route.setName((String) context.get("name"));
-                route.setUsername((String) context.get("operator"));
-                route.setOperator((String) context.get("operatorAddress"));
+                route.setName((String) request.getParameter("name"));
+                route.setUsername((String) request.getParameter("operator"));
+                route.setOperator((String) request.getParameter("operatorAddress"));
                 route.setId(Long.valueOf(idStr));
-                route.setPriority(Integer.parseInt((String) context.get("priority")));
+                route.setPriority(Integer.parseInt((String) request.getParameter("priority")));
                 route.setEnabled(oldRoute.isEnabled());
                 routeService.updateRoute(route);
 
                 Set<String> usernames = new HashSet<String>();
-                usernames.add((String) context.get("operator"));
+                usernames.add((String) request.getParameter("operator"));
                 usernames.add(route.getUsername());
                 //RelateUserUtils.addOwnersOfService(usernames, route.getService(), ownerDAO);
 
@@ -411,10 +485,10 @@ public class RoutesController extends BaseController {
                 params.put("route", route);
 
             } else {
-                context.put("message", getMessage("MissRequestParameters", "name"));
+                model.addAttribute("message", getMessage("MissRequestParameters", "name"));
             }
         } else {
-            context.put("message", getMessage("MissRequestParameters", "id"));
+            model.addAttribute("message", getMessage("MissRequestParameters", "id"));
         }
 
         return true;
@@ -426,12 +500,17 @@ public class RoutesController extends BaseController {
      * @param ids
      * @return
      */
-    public boolean delete(Long[] ids, Map<String, Object> context) {
+    @RequestMapping("/{ids}/delete")
+    public String delete(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response,
+                          Model model) {
+        prepare(request, response, model, "delete", "routes");
         for (Long id : ids) {
             routeService.deleteRoute(id);
         }
+        model.addAttribute("success", true);
+        model.addAttribute("redirect", "governance/routes");
+        return "governance/screen/redirect";
 
-        return true;
     }
 
     /**
@@ -440,12 +519,16 @@ public class RoutesController extends BaseController {
      * @param ids
      * @return
      */
-    public boolean enable(Long[] ids, Map<String, Object> context) {
+    @RequestMapping("/{ids}/enable")
+    public String enable(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response,
+                          Model model) {
+        prepare(request, response, model, "enable", "routes");
         for (Long id : ids) {
             routeService.enableRoute(id);
         }
-
-        return true;
+        model.addAttribute("success", true);
+        model.addAttribute("redirect", "governance/routes");
+        return "governance/screen/redirect";
     }
 
     /**
@@ -454,12 +537,16 @@ public class RoutesController extends BaseController {
      * @param ids
      * @return
      */
-    public boolean disable(Long[] ids, Map<String, Object> context) {
+    @RequestMapping("/{ids}/disable")
+    public String disable(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response,
+                           Model model) {
+        prepare(request, response, model, "disable", "routes");
         for (Long id : ids) {
             routeService.disableRoute(id);
         }
-
-        return true;
+        model.addAttribute("success", true);
+        model.addAttribute("redirect", "governance/routes");
+        return "governance/screen/redirect";
     }
 
     /**

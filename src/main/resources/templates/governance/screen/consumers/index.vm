@@ -112,7 +112,7 @@
         <tr>
             <td><input type="checkbox" name="ids" value="$consumer.id"/></td>
             <td>
-                <a href="consumers/show/?id=$consumer.id">#if($address)$tool.getSimpleName($consumer.service)#else$consumer.address#end</a>
+                <a href="consumers/$consumer.id">#if($address)$tool.getSimpleName($consumer.service)#else$consumer.address#end</a>
             </td>
             <td>$consumer.application</td>
             <td>
@@ -134,14 +134,14 @@
             </td>
             <td>
                 #if($consumer.routes && $consumer.routes.size() > 0)
-                    <a href="consumers/routed/?id=$consumer.id">#springMessage("routed")($consumer.routes.size())</a>
+                    <a href="consumers/$consumer.id/routed">#springMessage("routed")($consumer.routes.size())</a>
                 #else
                     <font color="gray">#springMessage("unrouted")</font>
                 #end
             </td>
             <td>
                 #if($consumer.providers && $consumer.providers.size() > 0)
-                    <a href="consumers/notified/?id=$consumer.id">#springMessage("notified")($consumer.providers.size())</a>
+                    <a href="consumers/$consumer.id/notified">#springMessage("notified")($consumer.providers.size())</a>
                 #else
                     <font color="red">#springMessage("NoProvider")</font>
                 #end
@@ -149,7 +149,7 @@
             #if($currentUser.role != "G")
                 <td>
                     #if($currentUser.hasServicePrivilege($consumer.service))
-                        <a href="consumers/edit?id=$consumer.id"><img src="$rootContextPath.getURI("images/ico_edit.png")"
+                        <a href="consumers/$consumer.id/edit"><img src="$rootContextPath.getURI("images/ico_edit.png")"
                                                                    width="12" height="12"/><span
                                 class="ico_font">#springMessage("edit")</span></a>
                         <span class="ico_line">|</span>

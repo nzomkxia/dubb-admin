@@ -1,53 +1,53 @@
 #set($layout = "/templates/governance/layout/default.vm")
 <div class="ico_btn">
     <a href="../overrides"><img src="$rootContextPath.getURI("images/ico_back.png")" width="12" height="12"/><span
-            class="ico_font">$i18n.get("back")</span></a>
+            class="ico_font">#springMessage("back")</span></a>
     <span class="ico_line">|</span>
     <a href="$override.id/edit">
         <img src="$rootContextPath.getURI("images/ico_edit.png")" width="13" height="13"/>
-        <span class="ico_font">$i18n.get("edit")</span></a>
+        <span class="ico_font">#springMessage("edit")</span></a>
     <span class="ico_line">|</span>
     <a href="#"
-       onclick="showConfirm('$i18n.get("confirm.delete")', '$override.id', '$override.id/delete'); return false;">
+       onclick="showConfirm('#springMessage("confirm.delete")', '$override.id', '$override.id/delete'); return false;">
         <img src="$rootContextPath.getURI("images/ico_delete.png")" width="12" height="12"/>
-        <span class="ico_font">$i18n.get("delete")</span></a>
+        <span class="ico_font">#springMessage("delete")</span></a>
 </div>
 <br/>
 
 <table cellpadding="0" cellspacing="0" class="info" id="dynamicTable">
     <tr>
-        <td style="width: 100px;"><b>$i18n.get("service"):</b></td>
+        <td style="width: 100px;"><b>#springMessage("service"):</b></td>
         <td style="width: 300px;">$override.service</td>
     </tr>
     <tr>
-        <td><b>$i18n.get("status"): <b></td>
+        <td><b>#springMessage("status"): <b></td>
         <td>
             #if($override.enabled)
-				$i18n.get("enable")
+				#springMessage("enable")
 			#else
-                $i18n.get("disable")
+                #springMessage("disable")
             #end
         </td>
     </tr>
     <tr>
-        <td style="width: 100px;"><b>$i18n.get("application")</b></td>
+        <td style="width: 100px;"><b>#springMessage("application")</b></td>
         <td>$!override.application</td>
     </tr>
     <tr>
-        <td style="width: 100px;"><b>$i18n.get("clientAddress")</b></td>
+        <td style="width: 100px;"><b>#springMessage("clientAddress")</b></td>
         <td>$!override.address</td>
     </tr>
 </table>
 <br>
 
 <hr>
-<b>$i18n.get("override.config")</b>
+<b>#springMessage("override.config")</b>
 <br>
 <table cellpadding="0" cellspacing="0" class="info" id="paramTable">
     #foreach($p in $parameters.entrySet())
         <tr id="paramTable.old.$velocityCount">
-            <td style="width: 150px;"><b>$i18n.get("parameter.key"): </b> $p.key</td>
-            <td><b>$i18n.get("parameter.value"): </b> $p.value
+            <td style="width: 150px;"><b>#springMessage("parameter.key"): </b> $p.key</td>
+            <td><b>#springMessage("parameter.value"): </b> $p.value
             </td>
         </tr>
     #end
@@ -57,18 +57,18 @@
 <br>
 <hr>
 
-<b>$i18n.get("override.mock")</b>
+<b>#springMessage("override.mock")</b>
 <br>
 <table cellpadding="0" cellspacing="0" class="info" id="mockTable">
     #if($mockDefaultMethodJson)
         <tr>
-            <td style="width: 150px;"><b>$i18n.get("mock.all.method"):</b>
+            <td style="width: 150px;"><b>#springMessage("mock.all.method"):</b>
             </th>
             <td>
                 #if($mockDefaultMethodForce == "force")
-                    $i18n.get("force.mock")
+                    #springMessage("force.mock")
                 #else
-                    $i18n.get("fail.mock")
+                    #springMessage("fail.mock")
                 #end
                 :
                 $mockDefaultMethodJson
@@ -76,13 +76,13 @@
         </tr>
     #end
     #foreach($m in $methodJsons.entrySet())
-        <td><b>$i18n.get("mock.method")<font color="orange"><code>${m.key}</code></font>$i18n.get("mock.value"):</b>
+        <td><b>#springMessage("mock.method")<font color="orange"><code>${m.key}</code></font>#springMessage("mock.value"):</b>
         </td>
         <td>
             #if($methodForces.get($m.key) == "force")
-                $i18n.get("force.mock")
+                #springMessage("force.mock")
             #else
-                $i18n.get("fail.mock")
+                #springMessage("fail.mock")
             #end
             :
             $m.value
@@ -105,7 +105,7 @@
     function check() {
         var service = byId('service').value.trim();
         if (service == '') {
-            showAlert("$i18n.get("PleaseInput", $i18n.get("service"))", 'service');
+            showAlert("#springMessage("PleaseInput"), #springMessage("service"))", 'service');
             return false;
         }
         return true;

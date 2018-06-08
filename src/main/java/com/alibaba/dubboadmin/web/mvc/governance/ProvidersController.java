@@ -42,6 +42,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -91,10 +92,10 @@ public class ProvidersController extends BaseController {
 
 
     @RequestMapping("")
-    public String index(HttpServletRequest request, HttpServletResponse response, Model model,
-                      @RequestParam(required = false) String service,
-                      @RequestParam(required = false) String application,
-                      @RequestParam(required = false) String address) {
+    public String index(@RequestParam(required = false) String service, @RequestParam(required = false) String application,
+                        @RequestParam(required = false) String address, @RequestParam(required = false) String keyWord,
+                        HttpServletRequest request, HttpServletResponse response, Model model) {
+
 
         prepare(request, response, model, "index", "providers");
 
@@ -130,7 +131,11 @@ public class ProvidersController extends BaseController {
         model.addAttribute("serviceAppMap", getServiceAppMap(providers));
 
         // record search history to cookies
-        setSearchHistroy(value, request, response);
+        try {
+            setSearchHistroy(value, request, response);
+        } catch (Exception e) {
+            //
+        }
         return "governance/screen/providers/index";
     }
 
@@ -164,6 +169,7 @@ public class ProvidersController extends BaseController {
      * @param value
      */
     private void setSearchHistroy(String value, HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("add new cookie: " + value);
         // Analyze existing cookies
         String separatorsB = "\\.\\.\\.\\.\\.\\.";
         String newCookiev = value;
@@ -177,6 +183,7 @@ public class ProvidersController extends BaseController {
                     if (count <= 10) {
                         if (!value.equals(v)) {
                             newCookiev = newCookiev + separatorsB + v;
+                            System.out.println("new cookie: " + newCookiev);
                         }
                     }
                     count++;
@@ -191,8 +198,8 @@ public class ProvidersController extends BaseController {
         response.addCookie(_cookie); // Write to client hard disk
     }
 
-    @RequestMapping("/show")
-    public String show(@RequestParam Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+    @RequestMapping("/{id}")
+    public String show(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "show", "providers");
         Provider provider = providerService.findProvider(id);
         if (provider != null && provider.isDynamic()) {
@@ -201,12 +208,19 @@ public class ProvidersController extends BaseController {
         }
         model.addAttribute("provider", provider);
         return "governance/screen/providers/show";
+
     }
 
     /**
      * Load new service page, get all the service name
-     *
      */
+
+    @RequestMapping("/{id}/add")
+    public String addWithID(@PathVariable("id") Long id, @RequestParam(required = false) String service,
+                      HttpServletRequest request, HttpServletResponse response, Model model) {
+        return add(id, service, request, response, model);
+    }
+
     @RequestMapping("/add")
     public String add(@RequestParam(required = false) Long id, @RequestParam(required = false) String service,
                       HttpServletRequest request, HttpServletResponse response, Model model) {
@@ -231,8 +245,8 @@ public class ProvidersController extends BaseController {
         return "governance/screen/providers/add";
     }
 
-    @RequestMapping("/edit")
-    public String edit(@RequestParam Long id, HttpServletRequest request, HttpServletResponse response,  Model model) {
+    @RequestMapping("/{id}/edit")
+    public String edit(@PathVariable("id") Long id,  @RequestParam(required = false) String service, HttpServletRequest request, HttpServletResponse response,  Model model) {
         prepare(request, response, model,"edit", "providers");
         boolean success = true;
         Provider provider = providerService.findProvider(id);
@@ -327,8 +341,8 @@ public class ProvidersController extends BaseController {
         return "governance/screen/redirect";
     }
 
-    @RequestMapping("/delete")
-    public String delete(HttpServletRequest request, HttpServletResponse response, @RequestParam Long[] ids, Model model) {
+    @RequestMapping("/{ids}/delete")
+    public String delete(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "delete", "providers");
         boolean success = true;
         for (Long id : ids) {
@@ -352,8 +366,8 @@ public class ProvidersController extends BaseController {
         return "governance/screen/redirect";
     }
 
-    @RequestMapping("/enable")
-    public String enable(HttpServletRequest request, HttpServletResponse response, @RequestParam Long[] ids, Model model) {
+    @RequestMapping("/{ids}/enable")
+    public String enable(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "enable", "providers");
         boolean success = true;
         Map<Long, Provider> id2Provider = new HashMap<Long, Provider>();
@@ -376,8 +390,8 @@ public class ProvidersController extends BaseController {
         return "governance/screen/redirect";
     }
 
-    @RequestMapping("/disable")
-    public String disable(HttpServletRequest request, HttpServletResponse response, @RequestParam Long[] ids, Model model) {
+    @RequestMapping("/{ids}/disable")
+    public String disable(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response,  Model model) {
         prepare(request, response, model, "disable", "providers");
         boolean success = true;
         for (Long id : ids) {
@@ -398,8 +412,8 @@ public class ProvidersController extends BaseController {
         return "governance/screen/redirect";
     }
 
-    @RequestMapping("/doubling")
-    public String doubling(HttpServletRequest request, HttpServletResponse response, @RequestParam Long[] ids, Model model) {
+    @RequestMapping("/{ids}/doubling")
+    public String doubling(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response,  Model model) {
         prepare(request, response, model, "doubling","providers");
         boolean success = true;
         for (Long id : ids) {
@@ -420,8 +434,8 @@ public class ProvidersController extends BaseController {
         return "governance/screen/redirect";
     }
 
-    @RequestMapping("/halving")
-    public String halving(HttpServletRequest request, HttpServletResponse response, @RequestParam Long[] ids, Model model) {
+    @RequestMapping("/{ids}/halving")
+    public String halving(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "halving","providers");
         boolean success = true;
         for (Long id : ids) {

@@ -68,7 +68,9 @@ public class AccessesController extends BaseController {
     @RequestMapping("")
     public String index(@RequestParam(required = false) String service,
                       @RequestParam(required = false) String address,
-                      HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+                        @RequestParam(required = false) String app,
+                        @RequestParam(required = false) String keyWord,
+                      HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "accesses");
         address = Tool.getIP(address);
         List<Route> routes;
@@ -85,7 +87,12 @@ public class AccessesController extends BaseController {
             return "governance/screen/accesses/index";
         }
         for (Route route : routes) {
-            Map<String, MatchPair> rule = RouteRule.parseRule(route.getMatchRule());
+            Map<String, MatchPair> rule = null;
+            try {
+                rule = RouteRule.parseRule(route.getMatchRule());
+            } catch (ParseException e) {
+                logger.error("parse rule error", e);
+            }
             MatchPair pair = rule.get("consumer.host");
             if (pair != null) {
                 for (String host : pair.getMatches()) {

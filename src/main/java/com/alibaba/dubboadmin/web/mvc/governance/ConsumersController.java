@@ -48,6 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -75,8 +76,9 @@ public class ConsumersController extends BaseController {
 
     @RequestMapping("")
     public String index(@RequestParam(required = false)String service, @RequestParam(required = false ) String application,
-                      @RequestParam(required = false) String address, HttpServletRequest request, HttpServletResponse response,
-                      Model model) throws Exception {
+                      @RequestParam(required = false) String address, @RequestParam(required = false) String keyWord,
+                        HttpServletRequest request, HttpServletResponse response,
+                      Model model) {
         prepare(request, response, model, "index", "consumers");
         List<Consumer> consumers;
         List<Override> overrides;
@@ -121,8 +123,8 @@ public class ConsumersController extends BaseController {
         return "governance/screen/consumers/index";
     }
 
-    @RequestMapping("/show")
-    public String show(@RequestParam Long id, @RequestParam(required = false) String methodName,
+    @RequestMapping("/{id}")
+    public String show(@PathVariable("id") Long id, @RequestParam(required = false) String methodName,
                        HttpServletRequest request, HttpServletResponse response, Model model) {
         if (methodName == null) {
             prepare(request, response, model, "show", "consumers");
@@ -148,8 +150,8 @@ public class ConsumersController extends BaseController {
         }
     }
 
-    @RequestMapping("/edit")
-    public String edit(@RequestParam Long id, HttpServletRequest request, HttpServletResponse response,  Model model) {
+    @RequestMapping("/{id}/edit")
+    public String edit(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response,  Model model) {
         prepare(request, response, model, "edit", "consumers");
         Consumer consumer = consumerService.findConsumer(id);
         List<Provider> providers = providerService.findByService(consumer.getService());
@@ -218,33 +220,33 @@ public class ConsumersController extends BaseController {
         return "governance/screen/redirect";
     }
 
-    @RequestMapping("/routed")
-    public String routed(@RequestParam Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+    @RequestMapping("/{id}/routed")
+    public String routed(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
         return show(id, "routed", request, response, model);
     }
 
-    @RequestMapping("/notified")
-    public String notified(@RequestParam Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+    @RequestMapping("/{id}/notified")
+    public String notified(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
         return show(id, "notified", request, response, model);
     }
 
-    @RequestMapping("/overrided")
-    public String overrided(@RequestParam Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+    @RequestMapping("/{id}/overrided")
+    public String overrided(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
         return show(id, "overrided", request, response, model);
     }
 
-    @RequestMapping("/shield")
-    public String shield(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+    @RequestMapping("/{ids}/shield")
+    public String shield(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
         return mock(ids, "force:return null", "shield", request, response, model);
     }
 
-    @RequestMapping("/tolerant")
-    public String tolerant(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+    @RequestMapping("/{ids}/tolerant")
+    public String tolerant(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
         return mock(ids, "fail:return null", "tolerant", request, response, model);
     }
 
-    @RequestMapping("/recover")
-    public String recover(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+    @RequestMapping("/{ids}/recover")
+    public String recover(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
         return mock(ids,  "", "recover", request, response, model);
     }
 
@@ -374,23 +376,23 @@ public class ConsumersController extends BaseController {
         return "governance/screen/redirect";
     }
 
-    @RequestMapping("/allow")
-    public String allow(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+    @RequestMapping("/{ids}/allow")
+    public String allow(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
         return access(request, response, ids, model, true, false, "allow");
     }
 
-    @RequestMapping("/forbid")
-    public String forbid(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+    @RequestMapping("/{ids}/forbid")
+    public String forbid(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
         return access(request, response, ids, model, false, false, "forbid");
     }
 
-    @RequestMapping("/onlyallow")
-    public String onlyallow(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+    @RequestMapping("/{ids}/onlyallow")
+    public String onlyallow(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
         return access(request, response, ids, model, true, true, "onlyallow");
     }
 
-    @RequestMapping("/onlyforbid")
-    public String onlyforbid(@RequestParam Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+    @RequestMapping("/{ids}/onlyforbid")
+    public String onlyforbid(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
         return access(request, response, ids, model, false, true, "onlyforbid");
     }
 

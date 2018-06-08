@@ -55,14 +55,14 @@ public class LoadbalancesController extends BaseController {
     private ProviderService providerService;
 
     @RequestMapping("")
-    public String index(@RequestParam(required = false) String service,
+    public String index(@RequestParam(required = false) String service,@RequestParam(required = false) String address,
+                        @RequestParam(required = false) String app, @RequestParam(required = false) String keyWord,
                         HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "loadbalances");
         service = StringUtils.trimToNull(service);
 
         List<LoadBalance> loadbalances;
         if (service != null && service.length() > 0) {
-
             loadbalances = OverrideUtils.overridesToLoadBalances(overrideService.findByService(service));
         } else {
             loadbalances = OverrideUtils.overridesToLoadBalances(overrideService.findAll());

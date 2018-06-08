@@ -54,7 +54,7 @@
     #end
 </div>
 <br/>
-<form id="consumerForm" action="../consumers/update" method="POST">
+<form id="consumerForm" action="../update" method="POST">
     <table cellpadding="0" cellspacing="0" class="info">
         <tr type = "hidden">
             <td>

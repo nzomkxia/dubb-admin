@@ -16,6 +16,7 @@
  */
 package com.alibaba.dubboadmin.web.mvc.governance;
 
+import java.security.cert.TrustAnchor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -41,6 +42,7 @@ import com.alibaba.dubboadmin.web.mvc.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -89,6 +91,7 @@ public class OverridesController extends BaseController {
     public String index(@RequestParam(required = false) String service,
                       @RequestParam(required = false) String address,
                       @RequestParam(required = false) String application,
+                        @RequestParam(required = false) String keyWord,
                       HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "overrides");
         List<Override> overrides;
@@ -105,7 +108,10 @@ public class OverridesController extends BaseController {
         return "governance/screen/overrides/index";
     }
 
-    public void show(Long id, Map<String, Object> context) {
+    @RequestMapping("/{id}")
+    public String show(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response,
+                     Model model) {
+        prepare(request, response, model, "show", "overrides");
         Override override = overrideService.findById(id);
 
         Map<String, String> parameters = parseQueryString(override.getParams());
@@ -113,8 +119,8 @@ public class OverridesController extends BaseController {
         if (parameters.get(DEFAULT_MOCK_JSON_KEY) != null) {
             String mock = URL.decode(parameters.get(DEFAULT_MOCK_JSON_KEY));
             String[] tokens = parseMock(mock);
-            context.put(FORM_DEFAULT_MOCK_METHOD_FORCE, tokens[0]);
-            context.put(FORM_DEFAULT_MOCK_METHOD_JSON, tokens[1]);
+            model.addAttribute(FORM_DEFAULT_MOCK_METHOD_FORCE, tokens[0]);
+            model.addAttribute(FORM_DEFAULT_MOCK_METHOD_JSON, tokens[1]);
             parameters.remove(DEFAULT_MOCK_JSON_KEY);
         }
 
@@ -132,10 +138,11 @@ public class OverridesController extends BaseController {
             }
         }
 
-        context.put("methodForces", method2Force);
-        context.put("methodJsons", method2Json);
-        context.put("parameters", parameters);
-        context.put("override", override);
+        model.addAttribute("methodForces", method2Force);
+        model.addAttribute("methodJsons", method2Json);
+        model.addAttribute("parameters", parameters);
+        model.addAttribute("override", override);
+        return "governance/screen/overrides/show";
     }
 
     @RequestMapping("/add")
@@ -168,7 +175,10 @@ public class OverridesController extends BaseController {
         return "governance/screen/overrides/add";
     }
 
-    public void edit(Long id, Map<String, Object> context) {
+    @RequestMapping("/{id}/edit")
+    public String edit(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response,
+                     Model model) {
+        prepare(request, response, model, "edit", "overrides");
         Override override = overrideService.findById(id);
 
         Map<String, String> parameters = parseQueryString(override.getParams());
@@ -176,8 +186,8 @@ public class OverridesController extends BaseController {
         if (parameters.get(DEFAULT_MOCK_JSON_KEY) != null) {
             String mock = URL.decode(parameters.get(DEFAULT_MOCK_JSON_KEY));
             String[] tokens = parseMock(mock);
-            context.put(FORM_DEFAULT_MOCK_METHOD_FORCE, tokens[0]);
-            context.put(FORM_DEFAULT_MOCK_METHOD_JSON, tokens[1]);
+            model.addAttribute(FORM_DEFAULT_MOCK_METHOD_FORCE, tokens[0]);
+            model.addAttribute(FORM_DEFAULT_MOCK_METHOD_JSON, tokens[1]);
             parameters.remove(DEFAULT_MOCK_JSON_KEY);
         }
 
@@ -202,11 +212,12 @@ public class OverridesController extends BaseController {
             }
         }
 
-        context.put("methods", methods);
-        context.put("methodForces", method2Force);
-        context.put("methodJsons", method2Json);
-        context.put("parameters", parameters);
-        context.put("override", override);
+        model.addAttribute("methods", methods);
+        model.addAttribute("methodForces", method2Force);
+        model.addAttribute("methodJsons", method2Json);
+        model.addAttribute("parameters", parameters);
+        model.addAttribute("override", override);
+        return "governance/screen/overrides/edit";
     }
 
     private void parseMock(String m, String mock, Map<String, String> method2Force, Map<String, String> method2Json) {
@@ -233,32 +244,33 @@ public class OverridesController extends BaseController {
         return tokens;
     }
 
-    boolean catchParams(Override override, Map<String, Object> context) {
-        String service = (String) context.get("service");
+    boolean catchParams(Override override, HttpServletRequest request, Model model) {
+        Map<String, String[]> map = request.getParameterMap();
+        String service = map.get("service")[0];
         if (service == null || service.trim().length() == 0) {
-            context.put("message", getMessage("service is blank!"));
+            model.addAttribute("message", getMessage("service is blank!"));
             return false;
         }
         if (!super.currentUser.hasServicePrivilege(service)) {
-            context.put("message", getMessage("HaveNoServicePrivilege", service));
+            model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
             return false;
         }
 
-        String defaultMockMethodForce = (String) context.get(FORM_DEFAULT_MOCK_METHOD_FORCE);
-        String defaultMockMethodJson = (String) context.get(FORM_DEFAULT_MOCK_METHOD_JSON);
+        String defaultMockMethodForce = map.get(FORM_DEFAULT_MOCK_METHOD_FORCE)[0];
+        String defaultMockMethodJson = map.get(FORM_DEFAULT_MOCK_METHOD_JSON)[0];
 
         Map<String, String> override2Value = new HashMap<String, String>();
         Map<String, String> method2Json = new HashMap<String, String>();
 
-        for (Map.Entry<String, Object> param : context.entrySet()) {
+        for (Map.Entry<String, String[]> param : map.entrySet()) {
             String key = param.getKey().trim();
-            if (!(param.getValue() instanceof String)) continue;
+            if(param.getValue().length != 1) continue;;
 
-            String value = (String) param.getValue();
+            String value = param.getValue()[0];
 
             if (key.startsWith(FORM_OVERRIDE_KEY) && value != null && value.trim().length() > 0) {
                 String index = key.substring(FORM_OVERRIDE_KEY.length());
-                String overrideValue = (String) context.get(FORM_OVERRIDE_VALUE + index);
+                String overrideValue = map.get(FORM_OVERRIDE_VALUE + index)[0];
                 if (overrideValue != null && overrideValue.trim().length() > 0) {
                     override2Value.put(value.trim(), overrideValue.trim());
                 }
@@ -266,14 +278,14 @@ public class OverridesController extends BaseController {
 
             if (key.startsWith(FORM_ORIGINAL_METHOD_PREFIX) && value != null && value.trim().length() > 0) {
                 String method = key.substring(FORM_ORIGINAL_METHOD_PREFIX.length());
-                String force = (String) context.get(FORM_ORIGINAL_METHOD_FORCE_PREFIX + method);
+                String force = map.get(FORM_ORIGINAL_METHOD_FORCE_PREFIX + method)[0];
                 method2Json.put(method, force + ":" + value.trim());
             }
 
             if (key.startsWith(FORM_DYNAMIC_METHOD_NAME_PREFIX) && value != null && value.trim().length() > 0) {
                 String index = key.substring(FORM_DYNAMIC_METHOD_NAME_PREFIX.length());
-                String force = (String) context.get(FORM_DYNAMIC_METHOD_FORCE_PREFIX + index);
-                String json = (String) context.get(FORM_DYNAMIC_METHOD_JSON_PREFIX + index);
+                String force = map.get(FORM_DYNAMIC_METHOD_FORCE_PREFIX + index)[0];
+                String json =  map.get(FORM_DYNAMIC_METHOD_JSON_PREFIX + index)[0];
 
                 if (json != null && json.trim().length() > 0) {
                     method2Json.put(value.trim(), force + ":" + json.trim());
@@ -302,7 +314,7 @@ public class OverridesController extends BaseController {
 
         String p = paramters.toString();
         if (p.trim().length() == 0) {
-            context.put("message", getMessage("Please enter Parameters!"));
+            model.addAttribute("message", getMessage("Please enter Parameters!"));
             return false;
         }
 
@@ -310,44 +322,66 @@ public class OverridesController extends BaseController {
         return true;
     }
 
-    public boolean create(Override override, Map<String, Object> context) {
-        if (!catchParams(override, context)) return false;
+
+    @RequestMapping("/create")
+    public String create(Override override, HttpServletRequest request,
+                         HttpServletResponse response, Model model) {
+        prepare(request,response,model,"update", "overrides");
+        boolean success = true;
+        if (!catchParams(override, request, model)) success =false;
 
         overrideService.saveOverride(override);
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/overrides");
+        return "governance/screen/redirect";
     }
 
-    public boolean update(Override override, Map<String, Object> context) {
+    @RequestMapping("/update")
+    public String update(Override override, HttpServletRequest request,
+                         HttpServletResponse response, Model model) {
+        prepare(request, response, model, "update", "overrides");
+        boolean  succcess = true;
         Override o = overrideService.findById(override.getId());
         override.setService(o.getService());
         override.setAddress(o.getAddress());
         override.setApplication(o.getApplication());
 
-        if (!catchParams(override, context)) return false;
+        if (!catchParams(override, request, model)) succcess = false;
 
         overrideService.updateOverride(override);
+        model.addAttribute("success", succcess);
+        model.addAttribute("redirect", "governance/overrides");
+        return "governance/screen/redirect";
 
-        return true;
     }
 
-    public boolean delete(Long[] ids, Map<String, Object> context) {
+    @RequestMapping("/{ids}/delete")
+    public String delete(@PathVariable("ids") Long[] ids, HttpServletRequest request,
+                              HttpServletResponse response, Model model) {
+        prepare(request, response, model, "delete", "overrides");
         for (Long id : ids) {
             overrideService.deleteOverride(id);
         }
 
-        return true;
+        model.addAttribute("success", true);
+        model.addAttribute("redirect", "governance/overrides");
+        return "governance/screen/redirect";
     }
 
-    public boolean enable(Long[] ids, Map<String, Object> context) {
+    @RequestMapping("/{ids}/enable")
+    public String enable(@PathVariable("ids") Long[] ids, HttpServletRequest request,
+                          HttpServletResponse response, Model model) {
+        prepare(request, response, model, "enable", "overrides");
+        boolean success = true;
         for (Long id : ids) {
             Override override = overrideService.findById(id);
             if (override == null) {
-                context.put("message", getMessage("NoSuchOperationData", id));
-                return false;
+                model.addAttribute("message", getMessage("NoSuchOperationData", id));
+                success = false;
             } else {
                 if (!super.currentUser.hasServicePrivilege(override.getService())) {
-                    context.put("message", getMessage("HaveNoServicePrivilege", override.getService()));
-                    return false;
+                    model.addAttribute("message", getMessage("HaveNoServicePrivilege", override.getService()));
+                    success = false;
                 }
             }
         }
@@ -356,19 +390,25 @@ public class OverridesController extends BaseController {
             overrideService.enableOverride(id);
         }
 
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/overrides");
+        return "governance/screen/redirect";
     }
 
-    public boolean disable(Long[] ids, Map<String, Object> context) {
+    @RequestMapping("/{ids}/disable")
+    public String disable(@PathVariable("ids") Long[] ids, HttpServletRequest request,
+                           HttpServletResponse response, Model model) {
+        prepare(request, response, model, "disable", "overrides");
+        boolean success = true;
         for (Long id : ids) {
             Override override = overrideService.findById(id);
             if (override == null) {
-                context.put("message", getMessage("NoSuchOperationData", id));
-                return false;
+                model.addAttribute("message", getMessage("NoSuchOperationData", id));
+                success = false;
             } else {
                 if (!super.currentUser.hasServicePrivilege(override.getService())) {
-                    context.put("message", getMessage("HaveNoServicePrivilege", override.getService()));
-                    return false;
+                    model.addAttribute("message", getMessage("HaveNoServicePrivilege", override.getService()));
+                    success = false;
                 }
             }
         }
@@ -376,8 +416,9 @@ public class OverridesController extends BaseController {
         for (Long id : ids) {
             overrideService.disableOverride(id);
         }
-
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/overrides");
+        return "governance/screen/redirect";
     }
 
 }

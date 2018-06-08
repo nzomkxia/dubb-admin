@@ -34,6 +34,7 @@ import com.alibaba.dubboadmin.web.mvc.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -51,6 +52,9 @@ public class AddressesController extends BaseController {
 
     @Autowired
     private ConsumerService consumerService;
+
+    @Autowired
+    ServicesController servicesController;
 
     private Map<String, Object> context = new HashMap<>();
 
@@ -122,6 +126,12 @@ public class AddressesController extends BaseController {
             model.addAttribute("consumerAddresses", newConsumers);
         }
         return "governance/screen/addresses/index";
+    }
+
+    @RequestMapping("/{ip:[0-9.]+}/{type}")
+    public String addressMapping(@PathVariable("ip") String ip, @PathVariable("type") String type,
+                                 HttpServletRequest request, HttpServletResponse response, Model model) {
+        return servicesController.route(null, type, null, ip, request, response, model);
     }
 
     public void search(@RequestParam(required = false) String application,

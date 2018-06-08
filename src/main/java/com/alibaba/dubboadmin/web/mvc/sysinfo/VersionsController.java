@@ -36,11 +36,11 @@ import com.alibaba.dubboadmin.web.mvc.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-@RequestMapping("/sysinfo/versions")
 public class VersionsController extends BaseController {
     @Autowired
     private ProviderService providerService;
@@ -48,7 +48,7 @@ public class VersionsController extends BaseController {
     @Autowired
     private ConsumerService consumerService;
 
-    @RequestMapping("")
+    @RequestMapping("/sysinfo/versions")
     public String index(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "versions");
         List<Provider> providers = providerService.findAll();
@@ -79,8 +79,10 @@ public class VersionsController extends BaseController {
         return "sysinfo/screen/versions/index";
     }
 
-    public void show(Long[] ids, Map<String, Object> context) {
-        String version = (String) context.get("version");
+    @RequestMapping("/sysinfo/version/{version}/versions/show")
+    public String show(@PathVariable("version") String version, HttpServletRequest request, HttpServletResponse response,
+                     Model model) {
+        prepare(request, response, model, "show", "versions");
         if (version != null && version.length() > 0) {
             List<Provider> providers = providerService.findAll();
             List<Consumer> consumers = consumerService.findAll();
@@ -104,8 +106,9 @@ public class VersionsController extends BaseController {
                     }
                 }
             }
-            context.put("applications", applications);
+            model.addAttribute("applications", applications);
         }
+        return "sysinfo/screen/versions/show";
     }
 
 }

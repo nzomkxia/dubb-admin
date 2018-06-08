@@ -16,6 +16,9 @@
  */
 package com.alibaba.dubboadmin.web.mvc.governance;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,11 +28,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.print.DocFlavor.STRING;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.alibaba.dubbo.common.URL;
 import com.alibaba.dubbo.common.utils.StringUtils;
+import com.alibaba.dubbo.rpc.filter.ConsumerContextFilter;
 import com.alibaba.dubboadmin.governance.service.ConsumerService;
 import com.alibaba.dubboadmin.governance.service.OverrideService;
 import com.alibaba.dubboadmin.governance.service.ProviderService;
@@ -38,9 +43,11 @@ import com.alibaba.dubboadmin.registry.common.route.OverrideUtils;
 import com.alibaba.dubboadmin.web.mvc.BaseController;
 import com.alibaba.dubboadmin.web.pulltool.Tool;
 
+import jdk.nashorn.internal.ir.ReturnNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -61,6 +68,33 @@ public class ServicesController extends BaseController {
     @Autowired
     private OverrideService overrideService;
 
+    @Autowired
+    private ProvidersController providers;
+
+    @Autowired
+    private ConsumersController consumers;
+
+    @Autowired
+    private ApplicationsController applications;
+
+    @Autowired
+    private RoutesController routes;
+
+    @Autowired
+    private OverridesController overrides;
+
+    @Autowired
+    private AccessesController accesses;
+
+    @Autowired
+    private WeightsController weights;
+
+    @Autowired
+    private LoadbalancesController loadbalances;
+
+    @Autowired
+    private OwnersController owners;
+
     @RequestMapping("")
     public String index(@RequestParam(required = false) String application,
                       @RequestParam(required = false) String address,
@@ -79,6 +113,7 @@ public class ServicesController extends BaseController {
         List<String> consumerServices = null;
         List<Override> overrides = null;
         if (application != null && application.length() > 0) {
+            model.addAttribute("app", application);
             providerServices = providerService.findServicesByApplication(application);
             consumerServices = consumerService.findServicesByApplication(application);
             overrides = overrideService.findByApplication(application);
@@ -133,6 +168,9 @@ public class ServicesController extends BaseController {
                 if (o.toLowerCase().toLowerCase().indexOf(keyword) != -1) {
                     newList.add(o);
                 }
+                if (o.toLowerCase().toLowerCase().equals(keyword.toLowerCase())) {
+                    service = o;
+                }
             }
             for (String o : providerServices) {
                 if (o.toLowerCase().indexOf(keyword) != -1) {
@@ -145,11 +183,75 @@ public class ServicesController extends BaseController {
                 }
             }
             model.addAttribute("services", newList);
+            model.addAttribute("keyword", keyword);
             model.addAttribute("providerServices", newProviders);
             model.addAttribute("consumerServices", newConsumers);
         }
         return "governance/screen/services/index";
     }
+
+    @RequestMapping("/{service}/{type}")
+    public String route(@PathVariable("service") String service, @PathVariable("type") String type,
+                        @RequestParam(required = false) String app,
+                        @RequestParam(required = false) String address,
+                        HttpServletRequest request, HttpServletResponse response, Model model) {
+        if (app != null) {
+            model.addAttribute("app", app);
+        }
+        if (address != null) {
+            model.addAttribute("address", address);
+        }
+        model.addAttribute("service", service);
+        try {
+            Field controllerField = getClass().getDeclaredField(type);
+            Object controllerValue = controllerField.get(this);
+            Method method = controllerValue.getClass().getDeclaredMethod("index", String.class, String.class, String.class,
+                String.class, HttpServletRequest.class, HttpServletResponse.class, Model.class);
+            return (String)method.invoke(controllerValue, service, app, address, null, request, response, model);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "governance/screen/services/index";
+        }
+    }
+
+    //@RequestMapping("/{service}/{type}/{action}")
+    //public String actionroute(@PathVariable("service") String service, @PathVariable("type") String type,
+    //                          @PathVariable("aciton") String action, @RequestParam(required = false) String app,
+    //                          @RequestParam(required = false) String address,
+    //                          HttpServletRequest request, HttpServletResponse response, Model model) {
+    //    if (app != null) {
+    //        model.addAttribute("app", app);
+    //    }
+    //    if (address != null) {
+    //        model.addAttribute("address", address);
+    //    }
+    //    Field controllerField = getClass().getDeclaredField(type);
+    //    Object controllerValue = controllerField.get(this);
+    //    Method[] methods = controllerValue.getClass().getDeclaredMethods();
+    //    Method m = null;
+    //    for (Method method : methods) {
+    //        if (method.getName().equals(action)) {
+    //           m = method;
+    //           break;
+    //        }
+    //    }
+    //    if (m != null) {
+    //    }
+    //}
+
+    //@RequestMapping("/{service}/{type}/{id}/{action}")
+    //public String actionroute(@PathVariable("service") String service, @PathVariable("type") String type,
+    //                          @PathVariable("id") Long id,
+    //                          @PathVariable("aciton") String action, @RequestParam(required = false) String app,
+    //                          @RequestParam(required = false) String address,
+    //                          HttpServletRequest request, HttpServletResponse response, Model model) {
+    //    if (app != null) {
+    //        model.addAttribute("app", app);
+    //    }
+    //    if (address != null) {
+    //        model.addAttribute("address", address);
+    //    }
+    //}
 
     public boolean shield(Map<String, Object> context) throws Exception {
         return mock(context, "force:return null");

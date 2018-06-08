@@ -4,7 +4,7 @@
             class="ico_font">#springMessage("back")</span></a>
 </div>
 <br/>
-<form id="df" action="../routes" method="POST" onsubmit="return check();">
+<form id="df" action="create" method="POST" onsubmit="return check();">
     <table cellpadding="0" cellspacing="0" class="info">
         <tr>
             <th width="100">#springMessage("route.name"): <font color='red'>*</font></th>

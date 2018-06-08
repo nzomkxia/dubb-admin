@@ -40,6 +40,7 @@ import com.alibaba.dubboadmin.web.mvc.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -60,6 +61,9 @@ public class ApplicationsController extends BaseController {
 
     @Autowired
     private OverrideService overrideService;
+
+    @Autowired
+    ServicesController servicesController;
 
     @RequestMapping("")
     public String index(@RequestParam(required = false) String service,
@@ -146,6 +150,21 @@ public class ApplicationsController extends BaseController {
             model.addAttribute("consumerApplications", newConsumers);
         }
         return "governance/screen/applications/index";
+    }
+
+    @RequestMapping("/{application}/services")
+    public String getService(@PathVariable("application") String app, HttpServletRequest request,
+                             HttpServletResponse response,
+                             Model model) {
+        return servicesController.index(app, null, null, null, request, response, model);
+    }
+
+    @RequestMapping("/{application}/services/{serviceName}/{type}")
+    public String serviceMapping(@PathVariable("application") String app,
+                                 @PathVariable("serviceName") String serviceName,
+                                 @PathVariable("type") String type, HttpServletRequest request, HttpServletResponse response,
+                                 Model model) {
+        return servicesController.route(serviceName, type, app, null, request, response, model);
     }
 
     public void search(@RequestParam(required = false) String service,

@@ -65,6 +65,8 @@ public class WeightsController extends BaseController {
     @RequestMapping("")
     public String index(@RequestParam(required = false) String service,
                         @RequestParam(required = false) String address,
+                        @RequestParam(required = false) String app,
+                        @RequestParam(required = false) String keyWord,
                         HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "weights");
         service = StringUtils.trimToNull(service);
