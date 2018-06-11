@@ -42,7 +42,10 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.support.BindingAwareModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
@@ -118,13 +121,15 @@ public class WeightsController extends BaseController {
         context.put("serviceList", serviceList);
     }
 
-    public boolean create(Map<String, Object> context) throws Exception {
-        String addr = (String) context.get("address");
-        String services = (String) context.get("multiservice");
+    @RequestMapping("/create")
+    public String create(HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        prepare(request, response, model, "create", "weights");
+        String addr = request.getParameter("address");
+        String services = request.getParameter("multiservice");
         if (services == null || services.trim().length() == 0) {
-            services = (String) context.get("service");
+            services = request.getParameter("service");
         }
-        String weight = (String) context.get("weight");
+        String weight = request.getParameter("weight");
 
         int w = Integer.parseInt(weight);
 
@@ -148,17 +153,23 @@ public class WeightsController extends BaseController {
                     if (port.trim().length() == 0) port = null;
                 }
                 if (!IP_PATTERN.matcher(ip).matches()) {
-                    context.put("message", "illegal IP: " + s);
-                    return false;
+                    model.addAttribute("message", "illegal IP: " + s);
+                    model.addAttribute("success", false);
+                    model.addAttribute("redirect", "governance/weights");
+                    return "governance/screen/redirect";
                 }
                 if (LOCAL_IP_PATTERN.matcher(ip).matches() || ALL_IP_PATTERN.matcher(ip).matches()) {
-                    context.put("message", "local IP or any host ip is illegal: " + s);
-                    return false;
+                    model.addAttribute("message", "local IP or any host ip is illegal: " + s);
+                    model.addAttribute("success", false);
+                    model.addAttribute("redirect", "governance/weights");
+                    return "governance/screen/redirect";
                 }
                 if (port != null) {
                     if (!NumberUtils.isDigits(port)) {
-                        context.put("message", "illegal port: " + s);
-                        return false;
+                        model.addAttribute("message", "illegal port: " + s);
+                        model.addAttribute("success", false);
+                        model.addAttribute("redirect", "governance/weights");
+                        return "governance/screen/redirect";
                     }
                 }
                 addresses.add(s);
@@ -177,8 +188,10 @@ public class WeightsController extends BaseController {
                 if (s.length() == 0)
                     continue;
                 if (!super.currentUser.hasServicePrivilege(s)) {
-                    context.put("message", getMessage("HaveNoServicePrivilege", s));
-                    return false;
+                    model.addAttribute("message", getMessage("HaveNoServicePrivilege", s));
+                    model.addAttribute("success", false);
+                    model.addAttribute("redirect", "governance/weights");
+                    return "governance/screen/redirect";
                 }
                 aimServices.add(s);
             }
@@ -187,46 +200,75 @@ public class WeightsController extends BaseController {
         for (String aimService : aimServices) {
             for (String a : addresses) {
                 Weight wt = new Weight();
-                wt.setUsername((String) context.get("operator"));
+                wt.setUsername((String) ((BindingAwareModelMap)model).get("operator"));
                 wt.setAddress(Tool.getIP(a));
                 wt.setService(aimService);
                 wt.setWeight(w);
                 overrideService.saveOverride(OverrideUtils.weightToOverride(wt));
             }
         }
-        return true;
+        model.addAttribute("success", true);
+        model.addAttribute("redirect", "governance/weights");
+        return "governance/screen/redirect";
     }
 
-    public void edit(Long id, Map<String, Object> context) {
-        //add(context);
-        show(id, context);
-        context.put("service", overrideService.findById(id).getService());
+    @RequestMapping("/{id}/edit")
+    public String edit(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "edit", "weights");
+        String service = request.getParameter("service");
+
+        if (service != null && service.length() > 0 && !service.contains("*")) {
+            List<Provider> providerList = providerService.findByService(service);
+            List<String> addressList = new ArrayList<String>();
+            for (Provider provider : providerList) {
+                addressList.add(provider.getUrl().split("://")[1].split("/")[0]);
+            }
+            model.addAttribute("addressList", addressList);
+            model.addAttribute("service", service);
+            model.addAttribute("methods", CollectionUtils.sort(providerService.findMethodsByService(service)));
+        } else {
+            List<String> serviceList = Tool.sortSimpleName(providerService.findServices());
+            model.addAttribute("serviceList", serviceList);
+        }
+        if (model.addAttribute("input") != null) model.addAttribute("input", model.addAttribute("input"));
+        Weight weight = OverrideUtils.overrideToWeight(overrideService.findById(id));
+        model.addAttribute("weight", weight);
+        model.addAttribute("service", overrideService.findById(id).getService());
+        return "governance/screen/weights/edit";
     }
 
-    public void sameSeviceEdit(Long id, Map<String, Object> context) {
-        //add(context);
-        show(id, context);
-    }
+    //public void sameSeviceEdit(Long id, Map<String, Object> context) {
+    //    add(context);
+    //    show(id, context);
+    //}
 
     /**
      * load weight for editing
      *
      * @param id
-     * @param context
+
      */
-    public void show(Long id, Map<String, Object> context) {
+    @RequestMapping("/{id}")
+    public String show(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "show", "weights");
         Weight weight = OverrideUtils.overrideToWeight(overrideService.findById(id));
-        context.put("weight", weight);
+        model.addAttribute("weight", weight);
+        return "governance/screen/weights/show";
     }
 
-    public boolean update(Weight weight, Map<String, Object> context) {
+    @RequestMapping(value = "/update", method = RequestMethod.POST) //post
+    public String update(Weight weight, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "update", "weights");
+        boolean success = true;
         if (!super.currentUser.hasServicePrivilege(weight.getService())) {
-            context.put("message", getMessage("HaveNoServicePrivilege", weight.getService()));
-            return false;
+            model.addAttribute("message", getMessage("HaveNoServicePrivilege", weight.getService()));
+            success = false;
         }
         weight.setAddress(Tool.getIP(weight.getAddress()));
         overrideService.updateOverride(OverrideUtils.weightToOverride(weight));
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/weights");
+        return "governance/screen/redirect";
     }
 
     /**
@@ -235,19 +277,24 @@ public class WeightsController extends BaseController {
      * @param ids
      * @return
      */
-    public boolean delete(Long[] ids, Map<String, Object> context) {
+    @RequestMapping("/{ids}/delete")
+    public String delete(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "delete", "weights");
+        boolean success = true;
         for (Long id : ids) {
             Weight w = OverrideUtils.overrideToWeight(overrideService.findById(id));
             if (!super.currentUser.hasServicePrivilege(w.getService())) {
-                context.put("message", getMessage("HaveNoServicePrivilege", w.getService()));
-                return false;
+                model.addAttribute("message", getMessage("HaveNoServicePrivilege", w.getService()));
+                success = false;
             }
         }
 
         for (Long id : ids) {
             overrideService.deleteOverride(id);
         }
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/weights");
+        return "governance/screen/redirect";
     }
 
 }
