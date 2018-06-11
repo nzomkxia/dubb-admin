@@ -1,28 +1,33 @@
 #set($layout = "/templates/governance/layout/default.vm")
 <div class="ico_btn">
     <a href="../../loadbalances"><img src="$rootContextPath.getURI("images/ico_back.png")" width="12" height="12"/><span
-            class="ico_font">$i18n.get("back")</span></a>
+            class="ico_font">#springMessage("back")</span></a>
     <span class="ico_line">|</span>
     <a href="../$loadbalance.id"><img src="$rootContextPath.getURI("images/ico_show.png")" width="12" height="12"/><span
-            class="ico_font">$i18n.get("show")</span></a>
+            class="ico_font">#springMessage("show")</span></a>
 </div>
 <br/>
-<form id="df" action="../$loadbalance.id" method="POST" onsubmit="return check();">
+<form id="df" action="../update" method="POST" onsubmit="return check();">
     <table cellpadding="0" cellspacing="0" class="info">
+        <tr type = "hidden">
+            <td>
+                <input type="hidden" name="id" value="$loadbalance.id">
+            </td>
+        </tr>
         <tr>
-            <th style="width: 100px;">$i18n.get("service")&nbsp;&nbsp;<font color='red'>*</font></th>
+            <th style="width: 100px;">#springMessage("service")&nbsp;&nbsp;<font color='red'>*</font></th>
             <td>
                 $loadbalance.service
             </td>
         </tr>
         <tr>
-            <th style="width: 100px;">$i18n.get("methodName")&nbsp;&nbsp;<font color='red'>*</font></th>
+            <th style="width: 100px;">#springMessage("methodName")&nbsp;&nbsp;<font color='red'>*</font></th>
             <td>
                 $loadbalance.method
             </td>
         </tr>
         <tr>
-            <th>$i18n.get("loadBalanceStrategy"):</th>
+            <th>#springMessage("loadBalanceStrategy"):</th>
             <td>
                 <input type="hidden" id="service" name="service" style="ime-mode:disabled" maxlength="200"
                        value="$loadbalance.service"/>
@@ -32,16 +37,16 @@
                        value="$loadbalance.strategy"/>
                 <select id="lbstrategy" name="lbstrategy"
                         onchange="if (this.value != '') { byId('strategy').value = this.value; this.value = ''; }">>
-                    <option value="">$i18n.get("Choose")</option>
-                    <option value="random">$i18n.get("random")</option>
-                    <option value="roundrobin">$i18n.get("roundrobin")</option>
-                    <option value="leastactive">$i18n.get("leastactive")</option>
+                    <option value="">#springMessage("Choose")</option>
+                    <option value="random">#springMessage("random")</option>
+                    <option value="roundrobin">#springMessage("roundrobin")</option>
+                    <option value="leastactive">#springMessage("leastactive")</option>
                 </select>
             </td>
         </tr>
         <tr>
             <th>
-                <div class="btn"><a href="#" onclick="if(check){document.getElementById('df').submit();}">$i18n.get(
+                <div class="btn"><a href="#" onclick="if(check){document.getElementById('df').submit();}">#springMessage(
                     "save")</a></div>
             </th>
             <td></td>
@@ -70,12 +75,12 @@
     function check() {
         var method = byId('method').value.trim();
         if (method == '') {
-            showAlert("$i18n.get("PleaseInput")$i18n.get("methodName")", 'method');
+            showAlert("#springMessage("PleaseInput")#springMessage("methodName")", 'method');
             return false;
         }
         var strategy = byId('strategy').value.trim();
         if (strategy == '') {
-            showAlert("$i18n.get("PleaseInput")$i18n.get("loadBalanceStrategy")", 'strategy');
+            showAlert("#springMessage("PleaseInput")#springMessage("loadBalanceStrategy")", 'strategy');
             return false;
         }
         return true;

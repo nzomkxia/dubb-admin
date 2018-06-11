@@ -4,7 +4,7 @@
             class="ico_font">#springMessage("back")</span></a>
 </div>
 <br/>
-<form id="df" action="../loadbalances" method="POST" onsubmit="return check()">
+<form id="df" action="../loadbalances/create" method="POST" onsubmit="return check()">
     <table cellpadding="0" cellspacing="0" class="info">
         <tr>
             <th style="width: 150px;">#springMessage("service")&nbsp;&nbsp;<font color='red'>*</font></th>

@@ -94,6 +94,7 @@ public class WeightsController extends BaseController {
     public String add(@RequestParam(required = false) String service,
                     HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "add", "weights");
+        String input = request.getParameter("input");
         if (service != null && service.length() > 0 && !service.contains("*")) {
             List<Provider> providerList = providerService.findByService(service);
             List<String> addressList = new ArrayList<String>();
@@ -107,7 +108,7 @@ public class WeightsController extends BaseController {
             List<String> serviceList = Tool.sortSimpleName(providerService.findServices());
             model.addAttribute("serviceList", serviceList);
         }
-        if (model.addAttribute("input") != null) model.addAttribute("input", model.addAttribute("input"));
+        if (input != null) model.addAttribute("input", input);
         return "governance/screen/weights/add";
     }
 
@@ -216,6 +217,7 @@ public class WeightsController extends BaseController {
     public String edit(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "edit", "weights");
         String service = request.getParameter("service");
+        String input = request.getParameter("input");
 
         if (service != null && service.length() > 0 && !service.contains("*")) {
             List<Provider> providerList = providerService.findByService(service);
@@ -230,7 +232,7 @@ public class WeightsController extends BaseController {
             List<String> serviceList = Tool.sortSimpleName(providerService.findServices());
             model.addAttribute("serviceList", serviceList);
         }
-        if (model.addAttribute("input") != null) model.addAttribute("input", model.addAttribute("input"));
+        if (input != null) model.addAttribute("input", input);
         Weight weight = OverrideUtils.overrideToWeight(overrideService.findById(id));
         model.addAttribute("weight", weight);
         model.addAttribute("service", overrideService.findById(id).getService());
@@ -263,9 +265,10 @@ public class WeightsController extends BaseController {
         if (!super.currentUser.hasServicePrivilege(weight.getService())) {
             model.addAttribute("message", getMessage("HaveNoServicePrivilege", weight.getService()));
             success = false;
+        } else {
+            weight.setAddress(Tool.getIP(weight.getAddress()));
+            overrideService.updateOverride(OverrideUtils.weightToOverride(weight));
         }
-        weight.setAddress(Tool.getIP(weight.getAddress()));
-        overrideService.updateOverride(OverrideUtils.weightToOverride(weight));
         model.addAttribute("success", success);
         model.addAttribute("redirect", "governance/weights");
         return "governance/screen/redirect";
@@ -286,6 +289,9 @@ public class WeightsController extends BaseController {
             if (!super.currentUser.hasServicePrivilege(w.getService())) {
                 model.addAttribute("message", getMessage("HaveNoServicePrivilege", w.getService()));
                 success = false;
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/weights");
+                return "governance/screen/redirect";
             }
         }
 

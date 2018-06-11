@@ -178,11 +178,17 @@ public class ConsumersController extends BaseController {
         if (consumer == null) {
             model.addAttribute("message", getMessage("NoSuchOperationData", id));
             success = false;
+            model.addAttribute("success", success);
+            model.addAttribute("redirect", "governance/consumers");
+            return "governance/screen/redirect";
         }
         String service = consumer.getService();
         if (!super.currentUser.hasServicePrivilege(service)) {
             model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
             success = false;
+            model.addAttribute("success", success);
+            model.addAttribute("redirect", "governance/consumers");
+            return "governance/screen/redirect";
         }
         Map<String, String> oldMap = StringUtils.parseQueryString(consumer.getParameters());
         Map<String, String> newMap = StringUtils.parseQueryString(parameters);
@@ -257,6 +263,9 @@ public class ConsumersController extends BaseController {
         if (ids == null || ids.length == 0) {
             model.addAttribute("message", getMessage("NoSuchOperationData"));
             success = false;
+            model.addAttribute("success", success);
+            model.addAttribute("redirect", "governance/consumers");
+            return "governance/screen/redirect";
         }
         List<Consumer> consumers = new ArrayList<Consumer>();
         for (Long id : ids) {
@@ -266,6 +275,9 @@ public class ConsumersController extends BaseController {
                 if (!super.currentUser.hasServicePrivilege(c.getService())) {
                     model.addAttribute("message", getMessage("HaveNoServicePrivilege", c.getService()));
                     success = false;
+                    model.addAttribute("success", success);
+                    model.addAttribute("redirect", "governance/consumers");
+                    return "governance/screen/redirect";
                 }
             }
         }
@@ -331,10 +343,16 @@ public class ConsumersController extends BaseController {
         if (service == null || service.length() == 0) {
             model.addAttribute("message", getMessage("NoSuchOperationData"));
             success = false;
+            model.addAttribute("success", success);
+            model.addAttribute("redirect", "governance/consumers");
+            return "governance/screen/redirect";
         }
         if (!super.currentUser.hasServicePrivilege(service)) {
             model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
             success = false;
+            model.addAttribute("success", success);
+            model.addAttribute("redirect", "governance/consumers");
+            return "governance/screen/redirect";
         }
         List<Override> overrides = overrideService.findByService(service);
         Override allOverride = null;
@@ -403,6 +421,9 @@ public class ConsumersController extends BaseController {
         if (ids == null || ids.length == 0) {
             model.addAttribute("message", getMessage("NoSuchOperationData"));
             success = false;
+            model.addAttribute("success", success);
+            model.addAttribute("redirect", "governance/consumers");
+            return "governance/screen/redirect";
         }
         List<Consumer> consumers = new ArrayList<Consumer>();
         for (Long id : ids) {
@@ -412,6 +433,9 @@ public class ConsumersController extends BaseController {
                 if (!super.currentUser.hasServicePrivilege(c.getService())) {
                     model.addAttribute("message", getMessage("HaveNoServicePrivilege", c.getService()));
                     success = false;
+                    model.addAttribute("success", success);
+                    model.addAttribute("redirect", "governance/consumers");
+                    return "governance/screen/redirect";
                 }
             }
         }

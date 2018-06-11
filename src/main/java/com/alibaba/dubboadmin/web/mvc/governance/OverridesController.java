@@ -328,9 +328,12 @@ public class OverridesController extends BaseController {
                          HttpServletResponse response, Model model) {
         prepare(request,response,model,"update", "overrides");
         boolean success = true;
-        if (!catchParams(override, request, model)) success =false;
+        if (!catchParams(override, request, model)) {
+            success =false;
+        } else {
+            overrideService.saveOverride(override);
+        }
 
-        overrideService.saveOverride(override);
         model.addAttribute("success", success);
         model.addAttribute("redirect", "governance/overrides");
         return "governance/screen/redirect";
@@ -346,9 +349,12 @@ public class OverridesController extends BaseController {
         override.setAddress(o.getAddress());
         override.setApplication(o.getApplication());
 
-        if (!catchParams(override, request, model)) succcess = false;
+        if (!catchParams(override, request, model)) {
+            succcess = false;
+        } else {
+            overrideService.updateOverride(override);
+        }
 
-        overrideService.updateOverride(override);
         model.addAttribute("success", succcess);
         model.addAttribute("redirect", "governance/overrides");
         return "governance/screen/redirect";
@@ -378,10 +384,16 @@ public class OverridesController extends BaseController {
             if (override == null) {
                 model.addAttribute("message", getMessage("NoSuchOperationData", id));
                 success = false;
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/overrides");
+                return "governance/screen/redirect";
             } else {
                 if (!super.currentUser.hasServicePrivilege(override.getService())) {
                     model.addAttribute("message", getMessage("HaveNoServicePrivilege", override.getService()));
                     success = false;
+                    model.addAttribute("success", success);
+                    model.addAttribute("redirect", "governance/overrides");
+                    return "governance/screen/redirect";
                 }
             }
         }
@@ -405,10 +417,16 @@ public class OverridesController extends BaseController {
             if (override == null) {
                 model.addAttribute("message", getMessage("NoSuchOperationData", id));
                 success = false;
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/overrides");
+                return "governance/screen/redirect";
             } else {
                 if (!super.currentUser.hasServicePrivilege(override.getService())) {
                     model.addAttribute("message", getMessage("HaveNoServicePrivilege", override.getService()));
                     success = false;
+                    model.addAttribute("success", success);
+                    model.addAttribute("redirect", "governance/overrides");
+                    return "governance/screen/redirect";
                 }
             }
         }

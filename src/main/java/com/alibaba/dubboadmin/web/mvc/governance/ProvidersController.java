@@ -266,6 +266,9 @@ public class ProvidersController extends BaseController {
         if (!super.currentUser.hasServicePrivilege(service)) {
             model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
             success = false;
+            model.addAttribute("success", success);
+            model.addAttribute("redirect", "governance/providers");
+            return "governance/screen/redirect";
         }
         if (provider.getParameters() == null) {
             String url = provider.getUrl();
@@ -294,11 +297,17 @@ public class ProvidersController extends BaseController {
         if (provider == null) {
             model.addAttribute("message", getMessage("NoSuchOperationData", id));
             success = false;
+            model.addAttribute("success", success);
+            model.addAttribute("redirect", "governance/providers");
+            return "governance/screen/redirect";
         }
         String service = provider.getService();
         if (!super.currentUser.hasServicePrivilege(service)) {
             model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
             success = false;
+            model.addAttribute("success", success);
+            model.addAttribute("redirect", "governance/providers");
+            return "governance/screen/redirect";
         }
         Map<String, String> oldMap = StringUtils.parseQueryString(provider.getParameters());
         Map<String, String> newMap = StringUtils.parseQueryString(parameters);
@@ -350,12 +359,21 @@ public class ProvidersController extends BaseController {
             if (provider == null) {
                 model.addAttribute("message", getMessage("NoSuchOperationData", id));
                 success = false;
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/providers");
+                return "governance/screen/redirect";
             } else if (provider.isDynamic()) {
                 model.addAttribute("message", getMessage("CanNotDeleteDynamicData", id));
                 success = false;
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/providers");
+                return "governance/screen/redirect";
             } else if (!super.currentUser.hasServicePrivilege(provider.getService())) {
                 model.addAttribute("message", getMessage("HaveNoServicePrivilege", provider.getService()));
                 success = false;
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/providers");
+                return "governance/screen/redirect";
             }
         }
         for (Long id : ids) {
@@ -376,9 +394,15 @@ public class ProvidersController extends BaseController {
             if (provider == null) {
                 model.addAttribute("message", getMessage("NoSuchOperationData", id));
                 success = false;
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/providers");
+                return "governance/screen/redirect";
             } else if (!super.currentUser.hasServicePrivilege(provider.getService())) {
                 model.addAttribute("message", getMessage("HaveNoServicePrivilege", provider.getService()));
                 success = false;
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/providers");
+                return "governance/screen/redirect";
             }
             id2Provider.put(id, provider);
         }
@@ -399,9 +423,15 @@ public class ProvidersController extends BaseController {
             if (provider == null) {
                 model.addAttribute("message", getMessage("NoSuchOperationData", id));
                 success = false;
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/providers");
+                return "governance/screen/redirect";
             } else if (!super.currentUser.hasServicePrivilege(provider.getService())) {
                 success = false;
                 model.addAttribute("message", getMessage("HaveNoServicePrivilege", provider.getService()));
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/providers");
+                return "governance/screen/redirect";
             }
         }
         for (Long id : ids) {
@@ -421,9 +451,15 @@ public class ProvidersController extends BaseController {
             if (provider == null) {
                 success = false;
                 model.addAttribute("message", getMessage("NoSuchOperationData", id));
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/providers");
+                return "governance/screen/redirect";
             } else if (!super.currentUser.hasServicePrivilege(provider.getService())) {
                 success = false;
                 model.addAttribute("message", getMessage("HaveNoServicePrivilege", provider.getService()));
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/providers");
+                return "governance/screen/redirect";
             }
         }
         for (Long id : ids) {
@@ -443,9 +479,15 @@ public class ProvidersController extends BaseController {
             if (provider == null) {
                 success = false;
                 model.addAttribute("message", getMessage("NoSuchOperationData", id));
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/providers");
+                return "governance/screen/redirect";
             } else if (!super.currentUser.hasServicePrivilege(provider.getService())) {
                 success = false;
                 model.addAttribute("message", getMessage("HaveNoServicePrivilege", provider.getService()));
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/providers");
+                return "governance/screen/redirect";
             }
         }
         for (Long id : ids) {

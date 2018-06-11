@@ -36,6 +36,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.support.BindingAwareModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -71,10 +73,12 @@ public class LoadbalancesController extends BaseController {
         return "governance/screen/loadbalances/index";
     }
 
-    @RequestMapping("/show")
-    public void show(Long id, Map<String, Object> context) {
+    @RequestMapping("/{id}")
+    public String show(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "show", "loadbalances");
         LoadBalance loadbalance = OverrideUtils.overrideToLoadBalance(overrideService.findById(id));
-        context.put("loadbalance", loadbalance);
+        model.addAttribute("loadbalance", loadbalance);
+        return "governance/screen/loadbalances/show";
     }
 
     @RequestMapping("/add")
@@ -99,33 +103,62 @@ public class LoadbalancesController extends BaseController {
         return "governance/screen/loadbalances/add";
     }
 
-    @RequestMapping("/edit")
-    public void edit(Long id, Map<String, Object> context) {
-        //add(context);
-        show(id, context);
+    @RequestMapping("/{id}/edit")
+    public String edit(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "edit", "loadbalances");
+        String service = request.getParameter("service");
+        String input = request.getParameter("input");
+
+        if (service != null && service.length() > 0 && !service.contains("*")) {
+            List<Provider> providerList = providerService.findByService(service);
+            List<String> addressList = new ArrayList<String>();
+            for (Provider provider : providerList) {
+                addressList.add(provider.getUrl().split("://")[1].split("/")[0]);
+            }
+            model.addAttribute("addressList", addressList);
+            model.addAttribute("service", service);
+            model.addAttribute("methods", CollectionUtils.sort(providerService.findMethodsByService(service)));
+        } else {
+            List<String> serviceList = Tool.sortSimpleName(providerService.findServices());
+            model.addAttribute("serviceList", serviceList);
+        }
+        if (input != null) model.addAttribute("input", input);
+        LoadBalance loadbalance = OverrideUtils.overrideToLoadBalance(overrideService.findById(id));
+        model.addAttribute("loadbalance", loadbalance);
+        return "governance/screen/loadbalances/edit";
     }
 
     @RequestMapping("/create")
-    public boolean create(LoadBalance loadBalance, Map<String, Object> context) {
+    public String create(LoadBalance loadBalance, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "create", "loadbalances");
+        boolean success = true;
         if (!super.currentUser.hasServicePrivilege(loadBalance.getService())) {
-            context.put("message", getMessage("HaveNoServicePrivilege", loadBalance.getService()));
-            return false;
+            model.addAttribute("message", getMessage("HaveNoServicePrivilege", loadBalance.getService()));
+            success = false;
+        } else {
+            loadBalance.setUsername((String) ((BindingAwareModelMap)model).get("operator"));
+            overrideService.saveOverride(OverrideUtils.loadBalanceToOverride(loadBalance));
         }
-
-        loadBalance.setUsername((String) context.get("operator"));
-        overrideService.saveOverride(OverrideUtils.loadBalanceToOverride(loadBalance));
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/loadbalances");
+        return "governance/screen/redirect";
     }
 
 
     @RequestMapping("/update")
-    public boolean update(LoadBalance loadBalance, Map<String, Object> context) {
+    public String update(LoadBalance loadBalance, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "update", "loadbalances");
+        boolean success = true;
         if (!super.currentUser.hasServicePrivilege(loadBalance.getService())) {
-            context.put("message", getMessage("HaveNoServicePrivilege", loadBalance.getService()));
-            return false;
+            model.addAttribute("message", getMessage("HaveNoServicePrivilege", loadBalance.getService()));
+            success = false;
+        } else {
+            overrideService.updateOverride(OverrideUtils.loadBalanceToOverride(loadBalance));
         }
-        overrideService.updateOverride(OverrideUtils.loadBalanceToOverride(loadBalance));
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/loadbalances");
+        return "governance/screen/redirect";
+
     }
 
     /**
@@ -133,20 +166,27 @@ public class LoadbalancesController extends BaseController {
      * @param ids
      * @return
      */
-    @RequestMapping("/delete")
-    public boolean delete(Long[] ids, Map<String, Object> context) {
+    @RequestMapping("/{ids}/delete")
+    public String delete(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "delete", "loadbalances");
+        boolean success = true;
         for (Long id : ids) {
             LoadBalance lb = OverrideUtils.overrideToLoadBalance(overrideService.findById(id));
             if (!super.currentUser.hasServicePrivilege(lb.getService())) {
-                context.put("message", getMessage("HaveNoServicePrivilege", lb.getService()));
-                return false;
+                model.addAttribute("message", getMessage("HaveNoServicePrivilege", lb.getService()));
+                success = false;
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/loadbalances");
+                return "governance/screen/redirect";
             }
         }
 
         for (Long id : ids) {
             overrideService.deleteOverride(id);
         }
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/loadbalances");
+        return "governance/screen/redirect";
     }
 
 }
