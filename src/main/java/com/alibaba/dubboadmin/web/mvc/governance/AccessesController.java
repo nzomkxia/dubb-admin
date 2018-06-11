@@ -124,9 +124,10 @@ public class AccessesController extends BaseController {
     }
 
     @RequestMapping("/create")
-    public boolean create(Map<String, Object> context) throws Exception {
-        String addr = (String) context.get("consumerAddress");
-        String services = (String) context.get("service");
+    public String create(HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        prepare(request, response, model, "create", "accesses");
+        String addr = request.getParameter("consumerAddress");
+        String services = request.getParameter("service");
         Set<String> consumerAddresses = toAddr(addr);
         Set<String> aimServices = toService(services);
         for (String aimService : aimServices) {
@@ -155,7 +156,7 @@ public class AccessesController extends BaseController {
                 matchPair = when.get("consumer.host");
             }
             for (String consumerAddress : consumerAddresses) {
-                if (Boolean.valueOf((String) context.get("allow"))) {
+                if (Boolean.valueOf((String) request.getParameter("allow"))) {
                     matchPair.getUnmatches().add(Tool.getIP(consumerAddress));
 
                 } else {
@@ -173,7 +174,10 @@ public class AccessesController extends BaseController {
             }
 
         }
-        return true;
+        model.addAttribute("success", true);
+        model.addAttribute("redirect", "governance/accesses");
+        return "governance/screen/redirect";
+
     }
 
     private Set<String> toAddr(String addr) throws IOException {
@@ -224,8 +228,8 @@ public class AccessesController extends BaseController {
      * @throws ParseException
      */
     @RequestMapping("/delete")
-    public boolean delete(Map<String, Object> context) throws ParseException {
-        String accesses = (String) context.get("accesses");
+    public String delete(@RequestParam String accesses, HttpServletRequest request, HttpServletResponse response, Model model) throws ParseException {
+        prepare(request, response, model, "delete", "accesses");
         String[] temp = accesses.split(" ");
         Map<String, Set<String>> prepareToDeleate = new HashMap<String, Set<String>>();
         for (String s : temp) {
@@ -280,7 +284,9 @@ public class AccessesController extends BaseController {
             }
 
         }
-        return true;
+        model.addAttribute("success", true);
+        model.addAttribute("redirect", "governance/accesses");
+        return "governance/screen/redirect";
     }
 
     public void show(Map<String, Object> context) {

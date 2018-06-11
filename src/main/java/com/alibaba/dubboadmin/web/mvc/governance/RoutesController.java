@@ -46,6 +46,7 @@ import com.alibaba.dubboadmin.web.pulltool.Tool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.support.BindingAwareModelMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -379,28 +380,38 @@ public class RoutesController extends BaseController {
      * @return
      */
     @RequestMapping("/{id}/update")
-    public boolean update(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String update(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "update", "routes");
+        boolean success = true;
         String idStr = String.valueOf(id);
         if (idStr != null && idStr.length() > 0) {
             String[] blacks = request.getParameterMap().get("black");
             //String[] blacks = (String[]) context.get("black");
             boolean black = false;
             if (blacks != null && blacks.length > 0) {
-                black = true;
+                success = false;
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/routes");
+                return "governance/screen/redirect";
             }
 
             Route oldRoute = routeService.findRoute(Long.valueOf(idStr));
             if (null == oldRoute) {
                 model.addAttribute("message", getMessage("NoSuchRecord"));
-                return false;
+                success = false;
+                model.addAttribute("success", success);
+                model.addAttribute("redirect", "governance/routes");
+                return "governance/screen/redirect";
             }
             // Check parameters, patchwork rule
             if (StringUtils.isNotEmpty((String) request.getParameter("name"))) {
                 String service = oldRoute.getService();
-                if (request.getParameter("operator") == null) {
+                if (((BindingAwareModelMap)model).get("operator") == null) {
                     model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
-                    return false;
+                    success = false;
+                    model.addAttribute("success", success);
+                    model.addAttribute("redirect", "governance/routes");
+                    return "governance/screen/redirect";
                 }
 
                 Map<String, String> when_name2valueList = new HashMap<String, String>();
@@ -442,7 +453,10 @@ public class RoutesController extends BaseController {
 
                 if (result.getThenCondition().isEmpty()) {
                     model.addAttribute("message", getMessage("Update route error! then is empty."));
-                    return false;
+                    success = false;
+                    model.addAttribute("success", success);
+                    model.addAttribute("redirect", "governance/routes");
+                    return "governance/screen/redirect";
                 }
 
                 String matchRule = result.getWhenConditionString();
@@ -451,11 +465,17 @@ public class RoutesController extends BaseController {
                 // Limit the length of the expression
                 if (matchRule.length() > MAX_RULE_LENGTH) {
                     model.addAttribute("message", getMessage("When rule is too long!"));
-                    return false;
+                    success = false;
+                    model.addAttribute("success", success);
+                    model.addAttribute("redirect", "governance/routes");
+                    return "governance/screen/redirect";
                 }
                 if (filterRule.length() > MAX_RULE_LENGTH) {
                     model.addAttribute("message", getMessage("Then rule is too long!"));
-                    return false;
+                    success = false;
+                    model.addAttribute("success", success);
+                    model.addAttribute("redirect", "governance/routes");
+                    return "governance/screen/redirect";
                 }
 
                 int priority = 0;
@@ -491,7 +511,9 @@ public class RoutesController extends BaseController {
             model.addAttribute("message", getMessage("MissRequestParameters", "id"));
         }
 
-        return true;
+        model.addAttribute("success", success);
+        model.addAttribute("redirect", "governance/routes");
+        return "governance/screen/redirect";
     }
 
     /**
