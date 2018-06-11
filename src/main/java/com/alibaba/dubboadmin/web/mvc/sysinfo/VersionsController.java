@@ -41,6 +41,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
+@RequestMapping("/sysinfo")
 public class VersionsController extends BaseController {
     @Autowired
     private ProviderService providerService;
@@ -48,7 +49,7 @@ public class VersionsController extends BaseController {
     @Autowired
     private ConsumerService consumerService;
 
-    @RequestMapping("/sysinfo/versions")
+    @RequestMapping("/versions")
     public String index(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "versions");
         List<Provider> providers = providerService.findAll();
@@ -79,7 +80,7 @@ public class VersionsController extends BaseController {
         return "sysinfo/screen/versions/index";
     }
 
-    @RequestMapping("/sysinfo/version/{version}/versions/show")
+    @RequestMapping("/version/{version}/versions/show")
     public String show(@PathVariable("version") String version, HttpServletRequest request, HttpServletResponse response,
                      Model model) {
         prepare(request, response, model, "show", "versions");

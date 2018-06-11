@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.alibaba.dubbo.common.utils.StringUtils;
@@ -37,7 +38,13 @@ import com.alibaba.dubboadmin.registry.common.domain.Provider;
 import com.alibaba.dubboadmin.web.mvc.BaseController;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+@Controller
+@RequestMapping("/sysinfo/dump")
 public class DumpController extends BaseController {
 
     @Autowired
@@ -46,10 +53,10 @@ public class DumpController extends BaseController {
     @Autowired
     ConsumerService consumerDAO;
 
-    @Autowired
-    HttpServletResponse response;
 
-    public void noProviders(Map<String, Object> context) throws IOException {
+    @RequestMapping("/noProviders")
+    public void noProviders(HttpServletRequest request, HttpServletResponse response, Model model) throws IOException {
+        prepare(request, response, model, "noProviders", "dump");
         PrintWriter writer = response.getWriter();
         List<String> sortedService = getNoProviders();
         Collections.sort(sortedService);
@@ -61,7 +68,9 @@ public class DumpController extends BaseController {
         response.setContentType("text/plain");
     }
 
-    public void services(Map<String, Object> context) throws IOException {
+    @RequestMapping("/services")
+    public void services(HttpServletRequest request, HttpServletResponse response, Model model) throws IOException {
+        prepare(request, response, model, "noProviders", "services");
         PrintWriter writer = response.getWriter();
         List<String> sortedService = providerDAO.findServices();
         Collections.sort(sortedService);
@@ -73,7 +82,8 @@ public class DumpController extends BaseController {
         response.setContentType("text/plain");
     }
 
-    public void providers(Map<String, Object> context) throws IOException {
+    @RequestMapping("/providers")
+    public void providers(HttpServletRequest request, HttpServletResponse response, Model model) throws IOException {
         PrintWriter writer = response.getWriter();
         List<Provider> providers = providerDAO.findAll();
         List<String> sortedProviders = new ArrayList<String>();
@@ -89,7 +99,8 @@ public class DumpController extends BaseController {
         response.setContentType("text/plain");
     }
 
-    public void consumers(Map<String, Object> context) throws IOException {
+    @RequestMapping("/consumers")
+    public void consumers(HttpServletRequest request, HttpServletResponse response, Model model) throws IOException {
         PrintWriter writer = response.getWriter();
         List<Consumer> consumers = consumerDAO.findAll();
         List<String> sortedConsumerss = new ArrayList<String>();
@@ -105,7 +116,8 @@ public class DumpController extends BaseController {
         response.setContentType("text/plain");
     }
 
-    public void versions(Map<String, Object> context) throws IOException {
+    @RequestMapping("/versions")
+    public void versions(HttpServletRequest request, HttpServletResponse response, Model model) throws IOException {
         PrintWriter writer = response.getWriter();
         List<Provider> providers = providerDAO.findAll();
         List<Consumer> consumers = consumerDAO.findAll();
@@ -135,7 +147,7 @@ public class DumpController extends BaseController {
             writer.println(StringUtils.join(versions.get(version), "\n"));
             writer.println("\n");
         }
-        context.put("versions", versions);
+        model.addAttribute("versions", versions);
         writer.flush();
         response.setContentType("text/plain");
     }

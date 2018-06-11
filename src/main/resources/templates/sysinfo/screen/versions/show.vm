@@ -1,6 +1,6 @@
 #set($layout = "/templates/sysinfo/layout/default.vm")
 <div class="ico_btn">
-    <a href="../versions"><img src="$rootContextPath.getURI("images/ico_back.png")" width="12" height="12"/><span
+    <a href="../../../versions"><img src="$rootContextPath.getURI("images/ico_back.png")" width="12" height="12"/><span
             class="ico_font">#springMessage("back")</span></a>
 </div>
 <br/>
