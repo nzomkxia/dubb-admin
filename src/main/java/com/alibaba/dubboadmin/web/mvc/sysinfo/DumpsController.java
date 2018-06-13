@@ -18,7 +18,6 @@ package com.alibaba.dubboadmin.web.mvc.sysinfo;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
