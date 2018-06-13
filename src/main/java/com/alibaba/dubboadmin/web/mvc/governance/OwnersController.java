@@ -32,6 +32,7 @@ import com.alibaba.dubboadmin.web.pulltool.Tool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.support.BindingAwareModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -50,11 +51,11 @@ public class OwnersController extends BaseController {
     private ProviderService providerService;
 
     @RequestMapping("")
-    public String index(@RequestParam(required = false) String service,@RequestParam(required = false) String address,
-                        @RequestParam(required = false) String app,@RequestParam(required = false) String keyWord,
-                      HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String index(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "owners");
         List<Owner> owners;
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String service = (String)newModel.get("service");
         if (service != null && service.length() > 0) {
             owners = ownerService.findByService(service);
         } else {
@@ -65,9 +66,10 @@ public class OwnersController extends BaseController {
     }
 
     @RequestMapping("/add")
-    public String add(@RequestParam(required = false) String service,
-                    HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String add(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "add", "owners");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String service = (String)newModel.get("service");
         if (service == null || service.length() == 0) {
             List<String> serviceList = Tool.sortSimpleName(new ArrayList<String>(providerService.findServices()));
             model.addAttribute("serviceList", serviceList);

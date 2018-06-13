@@ -34,6 +34,7 @@ import com.alibaba.dubboadmin.web.mvc.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.support.BindingAwareModelMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -59,14 +60,15 @@ public class AddressesController extends BaseController {
     private Map<String, Object> context = new HashMap<>();
 
     @RequestMapping("")
-    public String index(@RequestParam(required = false) String application,
-                      @RequestParam(required = false) String service,
-                      @RequestParam(required = false) String address,
-                      @RequestParam(required = false) String keyword,
-                      HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String index(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "addresses");
         List<String> providerAddresses = null;
         List<String> consumerAddresses = null;
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String application = (String)newModel.get("app");
+        String service = (String)newModel.get("service");
+        String address = (String)newModel.get("address");
+        String keyword = (String)newModel.get("keyword");
 
         if (application != null && application.length() > 0) {
             providerAddresses = providerService.findAddressesByApplication(application);
@@ -128,31 +130,28 @@ public class AddressesController extends BaseController {
         return "governance/screen/addresses/index";
     }
 
-    @RequestMapping("/{ip:[0-9.]+}/{type}")
-    public String addressMapping(@PathVariable("ip") String ip, @PathVariable("type") String type,
-                                 HttpServletRequest request, HttpServletResponse response, Model model) {
-        return servicesController.route(null, type, null, ip, request, response, model);
-    }
+    //@RequestMapping("/{ip:[0-9.]+}/{type}")
+    //public String addressMapping(@PathVariable("ip") String ip, @PathVariable("type") String type,
+    //                             HttpServletRequest request, HttpServletResponse response, Model model) {
+    //    return servicesController.route(null, type, null, ip, request, response, model);
+    //}
 
-    public void search(@RequestParam(required = false) String application,
-                       @RequestParam(required = false) String service,
-                       @RequestParam(required = false) String address,
-                       @RequestParam(required = false) String keyword,
-                       HttpServletRequest request, HttpServletResponse response, Model model) {
-        index(application, service, address, keyword, request, response, model);
-
-        Set<String> newList = new HashSet<String>();
-        @SuppressWarnings("unchecked")
-        Set<String> list = (Set<String>) context.get("addresses");
-        if (StringUtils.isNotEmpty(keyword)) {
-            keyword = keyword.toLowerCase();
-            for (String o : list) {
-                if (o.toLowerCase().indexOf(keyword) != -1) {
-                    newList.add(o);
-                }
-            }
-        }
-        context.put("addresses", newList);
-        model.addAttribute("addresses", newList);
-    }
+    //public void search(
+    //                   HttpServletRequest request, HttpServletResponse response, Model model) {
+    //    index(request, response, model);
+    //
+    //    Set<String> newList = new HashSet<String>();
+    //    @SuppressWarnings("unchecked")
+    //    Set<String> list = (Set<String>) context.get("addresses");
+    //    if (StringUtils.isNotEmpty(keyword)) {
+    //        keyword = keyword.toLowerCase();
+    //        for (String o : list) {
+    //            if (o.toLowerCase().indexOf(keyword) != -1) {
+    //                newList.add(o);
+    //            }
+    //        }
+    //    }
+    //    context.put("addresses", newList);
+    //    model.addAttribute("addresses", newList);
+    //}
 }

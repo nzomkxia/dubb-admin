@@ -29,7 +29,7 @@
         #if($success)
         sleep(this, 500);
         this.NextStep = function () {
-            window.location.href = '$rootContextPath.getURI("$redirect")';
+            window.location.href = '$redirect';
         }
         #end
     function sleep(obj, iMinSecond) {

@@ -42,35 +42,6 @@ public class BaseController {
     @Autowired
     protected Tool tool;
 
-    private static boolean isPrimitive(Class<?> cls) {
-        return cls.isPrimitive() || cls == Boolean.class || cls == Byte.class
-            || cls == Character.class || cls == Short.class || cls == Integer.class
-            || cls == Long.class || cls == Float.class || cls == Double.class
-            || cls == String.class;
-    }
-
-    private static Object convertPrimitive(Class<?> cls, String value) {
-        if (cls == boolean.class || cls == Boolean.class) {
-            return value == null || value.length() == 0 ? false : Boolean.valueOf(value);
-        } else if (cls == byte.class || cls == Byte.class) {
-            return value == null || value.length() == 0 ? 0 : Byte.valueOf(value);
-        } else if (cls == char.class || cls == Character.class) {
-            return value == null || value.length() == 0 ? '\0' : value.charAt(0);
-        } else if (cls == short.class || cls == Short.class) {
-            return value == null || value.length() == 0 ? 0 : Short.valueOf(value);
-        } else if (cls == int.class || cls == Integer.class) {
-            return value == null || value.length() == 0 ? 0 : Integer.valueOf(value);
-        } else if (cls == long.class || cls == Long.class) {
-            return value == null || value.length() == 0 ? 0 : Long.valueOf(value);
-        } else if (cls == float.class || cls == Float.class) {
-            return value == null || value.length() == 0 ? 0 : Float.valueOf(value);
-        } else if (cls == double.class || cls == Double.class) {
-            return value == null || value.length() == 0 ? 0 : Double.valueOf(value);
-        }
-        return value;
-    }
-
-
     public void prepare(HttpServletRequest request, HttpServletResponse response, Model model,
                         String methodName, String type) {
         if (request.getSession().getAttribute(WebConstants.CURRENT_USER_KEY) != null) {

@@ -57,10 +57,10 @@ public class LoadbalancesController extends BaseController {
     private ProviderService providerService;
 
     @RequestMapping("")
-    public String index(@RequestParam(required = false) String service,@RequestParam(required = false) String address,
-                        @RequestParam(required = false) String app, @RequestParam(required = false) String keyWord,
-                        HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String index(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "loadbalances");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String service = (String)newModel.get("service");
         service = StringUtils.trimToNull(service);
 
         List<LoadBalance> loadbalances;
@@ -82,10 +82,11 @@ public class LoadbalancesController extends BaseController {
     }
 
     @RequestMapping("/add")
-    public String add(@RequestParam(required = false) String service,
-                      @RequestParam(required = false) String input,
-                      HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String add(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "add", "loadbalances");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String service = (String)newModel.get("service");
+
         if (service != null && service.length() > 0 && !service.contains("*")) {
             List<Provider> providerList = providerService.findByService(service);
             List<String> addressList = new ArrayList<String>();
@@ -99,7 +100,7 @@ public class LoadbalancesController extends BaseController {
             List<String> serviceList = Tool.sortSimpleName(providerService.findServices());
             model.addAttribute("serviceList", serviceList);
         }
-        if (input != null) model.addAttribute("input", input);
+        //if (input != null) model.addAttribute("input", input);
         return "governance/screen/loadbalances/add";
     }
 
@@ -140,7 +141,7 @@ public class LoadbalancesController extends BaseController {
             overrideService.saveOverride(OverrideUtils.loadBalanceToOverride(loadBalance));
         }
         model.addAttribute("success", success);
-        model.addAttribute("redirect", "governance/loadbalances");
+        model.addAttribute("redirect", "../loadbalances");
         return "governance/screen/redirect";
     }
 
@@ -156,7 +157,7 @@ public class LoadbalancesController extends BaseController {
             overrideService.updateOverride(OverrideUtils.loadBalanceToOverride(loadBalance));
         }
         model.addAttribute("success", success);
-        model.addAttribute("redirect", "governance/loadbalances");
+        model.addAttribute("redirect", "../loadbalances");
         return "governance/screen/redirect";
 
     }
@@ -176,7 +177,7 @@ public class LoadbalancesController extends BaseController {
                 model.addAttribute("message", getMessage("HaveNoServicePrivilege", lb.getService()));
                 success = false;
                 model.addAttribute("success", success);
-                model.addAttribute("redirect", "governance/loadbalances");
+                model.addAttribute("redirect", "../../loadbalances");
                 return "governance/screen/redirect";
             }
         }
@@ -185,7 +186,7 @@ public class LoadbalancesController extends BaseController {
             overrideService.deleteOverride(id);
         }
         model.addAttribute("success", success);
-        model.addAttribute("redirect", "governance/loadbalances");
+        model.addAttribute("redirect", "../../loadbalances");
         return "governance/screen/redirect";
     }
 

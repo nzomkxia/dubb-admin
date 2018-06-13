@@ -44,6 +44,7 @@ import com.alibaba.dubboadmin.web.pulltool.Tool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.support.BindingAwareModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -66,12 +67,12 @@ public class AccessesController extends BaseController {
     private ProviderService providerService;
 
     @RequestMapping("")
-    public String index(@RequestParam(required = false) String service,
-                      @RequestParam(required = false) String address,
-                        @RequestParam(required = false) String app,
-                        @RequestParam(required = false) String keyWord,
-                      HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String index(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "accesses");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String address = (String)newModel.get("address");
+        String service = (String)newModel.get("service");
+
         address = Tool.getIP(address);
         List<Route> routes;
         if (service != null && service.length() > 0) {
@@ -175,7 +176,7 @@ public class AccessesController extends BaseController {
 
         }
         model.addAttribute("success", true);
-        model.addAttribute("redirect", "governance/accesses");
+        model.addAttribute("redirect", "../accesses");
         return "governance/screen/redirect";
 
     }
@@ -285,7 +286,7 @@ public class AccessesController extends BaseController {
 
         }
         model.addAttribute("success", true);
-        model.addAttribute("redirect", "governance/accesses");
+        model.addAttribute("redirect", "../accesses");
         return "governance/screen/redirect";
     }
 

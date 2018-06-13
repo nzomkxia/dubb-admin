@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 import javax.jws.WebParam.Mode;
@@ -47,6 +48,7 @@ import com.alibaba.dubboadmin.web.pulltool.Tool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.support.BindingAwareModelMap;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -75,15 +77,17 @@ public class ConsumersController extends BaseController {
     private RouteService routeService;
 
     @RequestMapping("")
-    public String index(@RequestParam(required = false)String service, @RequestParam(required = false ) String application,
-                      @RequestParam(required = false) String address, @RequestParam(required = false) String keyWord,
-                        HttpServletRequest request, HttpServletResponse response,
+    public String index(HttpServletRequest request, HttpServletResponse response,
                       Model model) {
         prepare(request, response, model, "index", "consumers");
         List<Consumer> consumers;
         List<Override> overrides;
         List<Provider> providers = null;
         List<Route> routes = null;
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String service = (String)newModel.get("service");
+        String address = (String)newModel.get("address");
+        String application = (String)newModel.get("app");
         // service
         if (service != null && service.length() > 0) {
             consumers = consumerService.findByService(service);
@@ -124,13 +128,9 @@ public class ConsumersController extends BaseController {
     }
 
     @RequestMapping("/{id}")
-    public String show(@PathVariable("id") Long id, @RequestParam(required = false) String methodName,
+    public String show(@PathVariable("id") Long id,
                        HttpServletRequest request, HttpServletResponse response, Model model) {
-        if (methodName == null) {
-            prepare(request, response, model, "show", "consumers");
-        } else {
-            prepare(request, response, model, methodName, "consumers");
-        }
+        prepare(request, response, model, "show", "consumers");
         Consumer consumer = consumerService.findConsumer(id);
         List<Provider> providers = providerService.findByService(consumer.getService());
         List<Route> routes = routeService.findByService(consumer.getService());
@@ -143,11 +143,7 @@ public class ConsumersController extends BaseController {
         model.addAttribute("providers", consumer.getProviders());
         model.addAttribute("routes", consumer.getRoutes());
         model.addAttribute("overrides", consumer.getOverrides());
-        if (methodName == null) {
-            return "governance/screen/consumers/show";
-        } else {
-            return "governance/screen/consumers/" + methodName;
-        }
+        return "governance/screen/consumers/show";
     }
 
     @RequestMapping("/{id}/edit")
@@ -228,17 +224,23 @@ public class ConsumersController extends BaseController {
 
     @RequestMapping("/{id}/routed")
     public String routed(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
-        return show(id, "routed", request, response, model);
+        prepare(request, response, model, "routed", "consumers");
+        showDetail(id, request, response, model);
+        return "governance/screen/consumers/routed";
     }
 
     @RequestMapping("/{id}/notified")
     public String notified(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
-        return show(id, "notified", request, response, model);
+        prepare(request, response, model, "notified", "consumers");
+        showDetail(id, request, response, model);
+        return "governance/screen/consumers/notified";
     }
 
     @RequestMapping("/{id}/overrided")
     public String overrided(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response, Model model) {
-        return show(id, "overrided", request, response, model);
+        prepare(request, response, model, "overrided", "consumers");
+        showDetail(id, request, response, model);
+        return "governance/screen/consumers/overrided";
     }
 
     @RequestMapping("/{ids}/shield")
@@ -319,6 +321,22 @@ public class ConsumersController extends BaseController {
         return "governance/screen/redirect";
     }
 
+    private void showDetail( Long id,
+                             HttpServletRequest request, HttpServletResponse response, Model model) {
+        Consumer consumer = consumerService.findConsumer(id);
+        List<Provider> providers = providerService.findByService(consumer.getService());
+        List<Route> routes = routeService.findByService(consumer.getService());
+        List<Override> overrides = overrideService.findByService(consumer.getService());
+        List<Route> routed = new ArrayList<Route>();
+        consumer.setProviders(RouteUtils.route(consumer.getService(), consumer.getAddress(), consumer.getParameters(), providers, overrides, routes, null, routed));
+        consumer.setRoutes(routed);
+        OverrideUtils.setConsumerOverrides(consumer, overrides);
+        model.addAttribute("consumer", consumer);
+        model.addAttribute("providers", consumer.getProviders());
+        model.addAttribute("routes", consumer.getRoutes());
+        model.addAttribute("overrides", consumer.getOverrides());
+    }
+
     @RequestMapping("/allshield")
     public String allshield(@RequestParam(required = false) String service, HttpServletRequest request,
                                                    HttpServletResponse response, Model model) throws Exception {
@@ -344,14 +362,14 @@ public class ConsumersController extends BaseController {
             model.addAttribute("message", getMessage("NoSuchOperationData"));
             success = false;
             model.addAttribute("success", success);
-            model.addAttribute("redirect", "governance/consumers");
+            model.addAttribute("redirect", "../consumers");
             return "governance/screen/redirect";
         }
         if (!super.currentUser.hasServicePrivilege(service)) {
             model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
             success = false;
             model.addAttribute("success", success);
-            model.addAttribute("redirect", "governance/consumers");
+            model.addAttribute("redirect", "../consumers");
             return "governance/screen/redirect";
         }
         List<Override> overrides = overrideService.findByService(service);
@@ -390,7 +408,7 @@ public class ConsumersController extends BaseController {
             overrideService.saveOverride(override);
         }
         model.addAttribute("success", success);
-        model.addAttribute("redirect", "governance/consumers");
+        model.addAttribute("redirect", "../consumers");
         return "governance/screen/redirect";
     }
 
@@ -422,7 +440,7 @@ public class ConsumersController extends BaseController {
             model.addAttribute("message", getMessage("NoSuchOperationData"));
             success = false;
             model.addAttribute("success", success);
-            model.addAttribute("redirect", "governance/consumers");
+            model.addAttribute("redirect", "../../consumers");
             return "governance/screen/redirect";
         }
         List<Consumer> consumers = new ArrayList<Consumer>();
@@ -434,7 +452,7 @@ public class ConsumersController extends BaseController {
                     model.addAttribute("message", getMessage("HaveNoServicePrivilege", c.getService()));
                     success = false;
                     model.addAttribute("success", success);
-                    model.addAttribute("redirect", "governance/consumers");
+                    model.addAttribute("redirect", "../../consumers");
                     return "governance/screen/redirect";
                 }
             }
@@ -517,7 +535,7 @@ public class ConsumersController extends BaseController {
             }
         }
         model.addAttribute("success", success);
-        model.addAttribute("redirect", "governance/consumers");
+        model.addAttribute("redirect", "../../consumers");
         return "governance/screen/redirect";
     }
 }

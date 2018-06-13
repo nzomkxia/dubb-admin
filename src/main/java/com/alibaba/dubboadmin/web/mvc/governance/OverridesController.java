@@ -42,6 +42,7 @@ import com.alibaba.dubboadmin.web.mvc.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.support.BindingAwareModelMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -88,12 +89,12 @@ public class OverridesController extends BaseController {
     }
 
     @RequestMapping("")
-    public String index(@RequestParam(required = false) String service,
-                      @RequestParam(required = false) String address,
-                      @RequestParam(required = false) String application,
-                        @RequestParam(required = false) String keyWord,
-                      HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String index(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "overrides");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String service = (String)newModel.get("service");
+        String application = (String)newModel.get("app");
+        String address = (String)newModel.get("address");
         List<Override> overrides;
         if (StringUtils.isNotEmpty(service)) {
             overrides = overrideService.findByService(service);
@@ -146,11 +147,11 @@ public class OverridesController extends BaseController {
     }
 
     @RequestMapping("/add")
-    public String add(@RequestParam(required = false) String service,
-                      @RequestParam(required = false) String address,
-                      @RequestParam(required = false) String application,
-                      HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String add(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model,"add", "overrides");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String application = (String)newModel.get("app");
+        String service = (String)newModel.get("service");
         List<String> serviceList = new ArrayList<String>();
         List<String> applicationList = new ArrayList<String>();
         if (StringUtils.isNotEmpty(application)) {

@@ -47,6 +47,7 @@ import jdk.nashorn.internal.ir.ReturnNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.support.BindingAwareModelMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -96,12 +97,13 @@ public class ServicesController extends BaseController {
     private OwnersController owners;
 
     @RequestMapping("")
-    public String index(@RequestParam(required = false) String application,
-                      @RequestParam(required = false) String address,
-                      @RequestParam(required = false) String service,
-                      @RequestParam(required = false) String keyword,
-                      HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String index(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "services");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String service = (String)newModel.get("service");
+        String application = (String)newModel.get("app");
+        String address = (String)newModel.get("address");
+        String keyword = (String)newModel.get("keyword");
 
         if (service == null
                 && application == null
@@ -190,29 +192,29 @@ public class ServicesController extends BaseController {
         return "governance/screen/services/index";
     }
 
-    @RequestMapping("/{service}/{type}")
-    public String route(@PathVariable("service") String service, @PathVariable("type") String type,
-                        @RequestParam(required = false) String app,
-                        @RequestParam(required = false) String address,
-                        HttpServletRequest request, HttpServletResponse response, Model model) {
-        if (app != null) {
-            model.addAttribute("app", app);
-        }
-        if (address != null) {
-            model.addAttribute("address", address);
-        }
-        model.addAttribute("service", service);
-        try {
-            Field controllerField = getClass().getDeclaredField(type);
-            Object controllerValue = controllerField.get(this);
-            Method method = controllerValue.getClass().getDeclaredMethod("index", String.class, String.class, String.class,
-                String.class, HttpServletRequest.class, HttpServletResponse.class, Model.class);
-            return (String)method.invoke(controllerValue, service, app, address, null, request, response, model);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "governance/screen/services/index";
-        }
-    }
+    //@RequestMapping("/{service}/{type}")
+    //public String route(@PathVariable("service") String service, @PathVariable("type") String type,
+    //                    @RequestParam(required = false) String app,
+    //                    @RequestParam(required = false) String address,
+    //                    HttpServletRequest request, HttpServletResponse response, Model model) {
+    //    if (app != null) {
+    //        model.addAttribute("app", app);
+    //    }
+    //    if (address != null) {
+    //        model.addAttribute("address", address);
+    //    }
+    //    model.addAttribute("service", service);
+    //    try {
+    //        Field controllerField = getClass().getDeclaredField(type);
+    //        Object controllerValue = controllerField.get(this);
+    //        Method method = controllerValue.getClass().getDeclaredMethod("index", String.class, String.class, String.class,
+    //            String.class, HttpServletRequest.class, HttpServletResponse.class, Model.class);
+    //        return (String)method.invoke(controllerValue, service, app, address, null, request, response, model);
+    //    } catch (Exception e) {
+    //        e.printStackTrace();
+    //        return "governance/screen/services/index";
+    //    }
+    //}
 
     //@RequestMapping("/{service}/{type}/{action}")
     //public String actionroute(@PathVariable("service") String service, @PathVariable("type") String type,

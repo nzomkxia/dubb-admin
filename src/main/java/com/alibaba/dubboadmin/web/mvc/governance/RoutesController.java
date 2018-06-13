@@ -138,12 +138,11 @@ public class RoutesController extends BaseController {
      *
      */
     @RequestMapping("")
-    public String index(@RequestParam(required = false) String service,
-                      @RequestParam(required = false) String address,
-                        @RequestParam(required = false) String app,
-                        @RequestParam(required = false) String keyWord,
-                      HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String index(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "routes");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String address = (String)newModel.get("address");
+        String service = (String)newModel.get("service");
         address = Tool.getIP(address);
         List<Route> routes;
         if (service != null && service.length() > 0
@@ -216,10 +215,10 @@ public class RoutesController extends BaseController {
      *
      */
     @RequestMapping("/add")
-    public String add(@RequestParam(required = false) String service,
-                    @RequestParam(required = false) String input,
-                    HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String add(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "add", "routes");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String service = (String)newModel.get("service");
         if (service != null && service.length() > 0 && !service.contains("*")) {
             model.addAttribute("service", service);
             model.addAttribute("methods", CollectionUtils.sort(new ArrayList<String>(providerService.findMethodsByService(service))));
@@ -228,7 +227,7 @@ public class RoutesController extends BaseController {
             model.addAttribute("serviceList", serviceList);
         }
 
-        if (input != null) model.addAttribute("input", input);
+        //if (input != null) model.addAttribute("input", input);
         return "governance/screen/routes/add";
     }
 
@@ -336,7 +335,7 @@ public class RoutesController extends BaseController {
             if (routeRule.getThenCondition().isEmpty()) {
                 model.addAttribute("message", getMessage("Add route error! then is empty."));
                 model.addAttribute("success", false);
-                model.addAttribute("redirect", "governance/routes");
+                model.addAttribute("redirect", "../routes");
                 return "governance/screen/redirect";
             }
 
@@ -347,13 +346,13 @@ public class RoutesController extends BaseController {
             if (matchRule.length() > MAX_RULE_LENGTH) {
                 model.addAttribute("message", getMessage("When rule is too long!"));
                 model.addAttribute("success", false);
-                model.addAttribute("redirect", "governance/routes");
+                model.addAttribute("redirect", "../routes");
                 return "governance/screen/redirect";
             }
             if (filterRule.length() > MAX_RULE_LENGTH) {
                 model.addAttribute("message", getMessage("Then rule is too long!"));
                 model.addAttribute("success", false);
-                model.addAttribute("redirect", "governance/routes");
+                model.addAttribute("redirect", "../routes");
                 return "governance/screen/redirect";
             }
 
@@ -370,7 +369,7 @@ public class RoutesController extends BaseController {
 
         }
         model.addAttribute("success", success);
-        model.addAttribute("redirect", "governance/routes");
+        model.addAttribute("redirect", "../routes");
         return "governance/screen/redirect";
     }
 
@@ -391,7 +390,7 @@ public class RoutesController extends BaseController {
             if (blacks != null && blacks.length > 0) {
                 success = false;
                 model.addAttribute("success", success);
-                model.addAttribute("redirect", "governance/routes");
+                model.addAttribute("redirect", "../../routes");
                 return "governance/screen/redirect";
             }
 
@@ -400,7 +399,7 @@ public class RoutesController extends BaseController {
                 model.addAttribute("message", getMessage("NoSuchRecord"));
                 success = false;
                 model.addAttribute("success", success);
-                model.addAttribute("redirect", "governance/routes");
+                model.addAttribute("redirect", "../../routes");
                 return "governance/screen/redirect";
             }
             // Check parameters, patchwork rule
@@ -410,7 +409,7 @@ public class RoutesController extends BaseController {
                     model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
                     success = false;
                     model.addAttribute("success", success);
-                    model.addAttribute("redirect", "governance/routes");
+                    model.addAttribute("redirect", "../../routes");
                     return "governance/screen/redirect";
                 }
 
@@ -455,7 +454,7 @@ public class RoutesController extends BaseController {
                     model.addAttribute("message", getMessage("Update route error! then is empty."));
                     success = false;
                     model.addAttribute("success", success);
-                    model.addAttribute("redirect", "governance/routes");
+                    model.addAttribute("redirect", "../../routes");
                     return "governance/screen/redirect";
                 }
 
@@ -467,14 +466,14 @@ public class RoutesController extends BaseController {
                     model.addAttribute("message", getMessage("When rule is too long!"));
                     success = false;
                     model.addAttribute("success", success);
-                    model.addAttribute("redirect", "governance/routes");
+                    model.addAttribute("redirect", "../../routes");
                     return "governance/screen/redirect";
                 }
                 if (filterRule.length() > MAX_RULE_LENGTH) {
                     model.addAttribute("message", getMessage("Then rule is too long!"));
                     success = false;
                     model.addAttribute("success", success);
-                    model.addAttribute("redirect", "governance/routes");
+                    model.addAttribute("redirect", "../../routes");
                     return "governance/screen/redirect";
                 }
 
@@ -512,7 +511,7 @@ public class RoutesController extends BaseController {
         }
 
         model.addAttribute("success", success);
-        model.addAttribute("redirect", "governance/routes");
+        model.addAttribute("redirect", "../../routes");
         return "governance/screen/redirect";
     }
 
@@ -530,7 +529,7 @@ public class RoutesController extends BaseController {
             routeService.deleteRoute(id);
         }
         model.addAttribute("success", true);
-        model.addAttribute("redirect", "governance/routes");
+        model.addAttribute("redirect", "../../routes");
         return "governance/screen/redirect";
 
     }
@@ -549,7 +548,7 @@ public class RoutesController extends BaseController {
             routeService.enableRoute(id);
         }
         model.addAttribute("success", true);
-        model.addAttribute("redirect", "governance/routes");
+        model.addAttribute("redirect", "../../routes");
         return "governance/screen/redirect";
     }
 
@@ -567,7 +566,7 @@ public class RoutesController extends BaseController {
             routeService.disableRoute(id);
         }
         model.addAttribute("success", true);
-        model.addAttribute("redirect", "governance/routes");
+        model.addAttribute("redirect", "../../routes");
         return "governance/screen/redirect";
     }
 

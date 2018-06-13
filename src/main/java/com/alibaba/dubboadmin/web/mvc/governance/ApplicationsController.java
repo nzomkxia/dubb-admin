@@ -40,6 +40,7 @@ import com.alibaba.dubboadmin.web.mvc.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.support.BindingAwareModelMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -66,12 +67,13 @@ public class ApplicationsController extends BaseController {
     ServicesController servicesController;
 
     @RequestMapping("")
-    public String index(@RequestParam(required = false) String service,
-                      @RequestParam(required = false) String address,
-                        @RequestParam(required = false) String application,
-                      @RequestParam(required = false) String keyword,
-                      HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String index(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "applications");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String service = (String)newModel.get("service");
+        String application = (String)newModel.get("app");
+        String address = (String)newModel.get("address");
+        String keyword = (String)newModel.get("keyword");
         if (service != null) {
             Set<String> applications = new TreeSet<String>();
             List<String> providerApplications = providerService.findApplicationsByServiceName(service);
@@ -152,42 +154,42 @@ public class ApplicationsController extends BaseController {
         return "governance/screen/applications/index";
     }
 
-    @RequestMapping("/{application}/services")
-    public String getService(@PathVariable("application") String app, HttpServletRequest request,
-                             HttpServletResponse response,
-                             Model model) {
-        return servicesController.index(app, null, null, null, request, response, model);
-    }
+    //@RequestMapping("/{application}/services")
+    //public String getService(@PathVariable("application") String app, HttpServletRequest request,
+    //                         HttpServletResponse response,
+    //                         Model model) {
+    //    return servicesController.index(app, null, null, null, request, response, model);
+    //}
 
-    @RequestMapping("/{application}/services/{serviceName}/{type}")
-    public String serviceMapping(@PathVariable("application") String app,
-                                 @PathVariable("serviceName") String serviceName,
-                                 @PathVariable("type") String type, HttpServletRequest request, HttpServletResponse response,
-                                 Model model) {
-        return servicesController.route(serviceName, type, app, null, request, response, model);
-    }
+    //@RequestMapping("/{application}/services/{serviceName}/{type}")
+    //public String serviceMapping(@PathVariable("application") String app,
+    //                             @PathVariable("serviceName") String serviceName,
+    //                             @PathVariable("type") String type, HttpServletRequest request, HttpServletResponse response,
+    //                             Model model) {
+    //    return servicesController.route(serviceName, type, app, null, request, response, model);
+    //}
 
-    public void search(@RequestParam(required = false) String service,
-                       @RequestParam(required = false) String address,
-                       @RequestParam(required = false) String application,
-                       @RequestParam(required = false) String keyword,
-                       HttpServletRequest request, HttpServletResponse response, Model model) {
-        index(service, address, application, keyword, request, response, model);
-
-        //Set<String> newList = new HashSet<String>();
-        //@SuppressWarnings("unchecked")
-        //Set<String> apps = (Set<String>) .get("applications");
-        //String keyword = (String) context.get("keyword");
-        //if (StringUtils.isNotEmpty(keyword)) {
-        //    keyword = keyword.toLowerCase();
-        //    for (String o : apps) {
-        //        if (o.toLowerCase().indexOf(keyword) != -1) {
-        //            newList.add(o);
-        //        }
-        //    }
-        //}
-        //context.put("applications", newList);
-    }
+    //public void search(@RequestParam(required = false) String service,
+    //                   @RequestParam(required = false) String address,
+    //                   @RequestParam(required = false) String application,
+    //                   @RequestParam(required = false) String keyword,
+    //                   HttpServletRequest request, HttpServletResponse response, Model model) {
+    //    index(service, address, application, keyword, request, response, model);
+    //
+    //    //Set<String> newList = new HashSet<String>();
+    //    //@SuppressWarnings("unchecked")
+    //    //Set<String> apps = (Set<String>) .get("applications");
+    //    //String keyword = (String) context.get("keyword");
+    //    //if (StringUtils.isNotEmpty(keyword)) {
+    //    //    keyword = keyword.toLowerCase();
+    //    //    for (String o : apps) {
+    //    //        if (o.toLowerCase().indexOf(keyword) != -1) {
+    //    //            newList.add(o);
+    //    //        }
+    //    //    }
+    //    //}
+    //    //context.put("applications", newList);
+    //}
 
     public boolean shield(Map<String, Object> context) throws Exception {
         return mock(context, "force:return null");
