@@ -66,12 +66,11 @@ public class WeightsController extends BaseController {
     private ProviderService providerService;
 
     @RequestMapping("")
-    public String index(@RequestParam(required = false) String service,
-                        @RequestParam(required = false) String address,
-                        @RequestParam(required = false) String app,
-                        @RequestParam(required = false) String keyWord,
-                        HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String index(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "index", "weights");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String service = (String)newModel.get("service");
+        String address = (String)newModel.get("address");
         service = StringUtils.trimToNull(service);
         address = Tool.getIP(address);
         List<Weight> weights;
@@ -91,9 +90,10 @@ public class WeightsController extends BaseController {
      *
      */
     @RequestMapping("/add")
-    public String add(@RequestParam(required = false) String service,
-                    HttpServletRequest request, HttpServletResponse response, Model model) {
+    public String add(HttpServletRequest request, HttpServletResponse response, Model model) {
         prepare(request, response, model, "add", "weights");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String service = (String)newModel.get("service");
         String input = request.getParameter("input");
         if (service != null && service.length() > 0 && !service.contains("*")) {
             List<Provider> providerList = providerService.findByService(service);

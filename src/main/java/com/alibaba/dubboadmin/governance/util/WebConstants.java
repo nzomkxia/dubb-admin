@@ -16,6 +16,7 @@
  */
 package com.alibaba.dubboadmin.governance.util;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -57,5 +58,21 @@ public class WebConstants {
      */
     public static final Integer OPRATION_RECORDS_PAGE_SIZE = 100;
     Map<String, Object> context;
+
+    public static final Map<String, String> mapper = new HashMap<>();
+
+    static {
+        mapper.put("providers", "providersController");
+        mapper.put("consumers", "consumersController");
+        mapper.put("applications", "applicationsController");
+        mapper.put("routes", "routesController");
+        mapper.put("overrides", "overridesController");
+        mapper.put("accesses", "accessesController");
+        mapper.put("loadbalances", "loadbalancesController");
+        mapper.put("owners", "ownersController");
+        mapper.put("weights", "weightsController");
+    }
+
+
 
 }
