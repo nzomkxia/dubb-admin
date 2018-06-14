@@ -4,9 +4,9 @@
 #elseif($keyword && $services.size() == 1)
 <script type="text/javascript">
         #if(! $providerServices.contains($services.iterator().next()))
-        window.location.href = "consumers?service=$services.iterator().next()";
+        window.location.href = "services/$services.iterator().next()/consumers";
         #else
-        window.location.href = "providers?service=$services.iterator().next()";
+        window.location.href = "services/$services.iterator().next()/providers";
         #end
 </script>
 #else

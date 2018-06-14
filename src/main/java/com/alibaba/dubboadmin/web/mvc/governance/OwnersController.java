@@ -33,7 +33,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.support.BindingAwareModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
  * ProvidersController. URI: /services/$service/owners
@@ -76,39 +78,56 @@ public class OwnersController extends BaseController {
         return "governance/screen/owners/add";
     }
 
-    public boolean create(Owner owner, Map<String, Object> context) {
+    @RequestMapping(value =  "/create", method = RequestMethod.POST)  //post
+    public String create(Owner owner, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "create", "owners");
         String service = owner.getService();
         String username = owner.getUsername();
         if (service == null || service.length() == 0
                 || username == null || username.length() == 0) {
-            context.put("message", getMessage("NoSuchOperationData"));
-            return false;
+            model.addAttribute("message", getMessage("NoSuchOperationData"));
+            model.addAttribute("success", false);
+            model.addAttribute("redirect", "../owners");
+            return "governance/screen/redirect";
         }
         if (!super.currentUser.hasServicePrivilege(service)) {
-            context.put("message", getMessage("HaveNoServicePrivilege", service));
-            return false;
+            model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
+            model.addAttribute("success", false);
+            model.addAttribute("redirect", "../owners");
+            return "governance/screen/redirect";
         }
         ownerService.saveOwner(owner);
-        return true;
+        model.addAttribute("success", true);
+        model.addAttribute("redirect", "../owners");
+        return "governance/screen/redirect";
     }
 
-    public boolean delete(Long[] ids, Map<String, Object> context) {
-        String service = (String) context.get("service");
-        String username = (String) context.get("username");
+    @RequestMapping("/{ids}/delete")
+    public String delete(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) {
+        prepare(request, response, model, "delete", "owners");
+
+        String service = request.getParameter("service");
+        String username = request.getParameter("username");
         Owner owner = new Owner();
         owner.setService(service);
         owner.setUsername(username);
         if (service == null || service.length() == 0
                 || username == null || username.length() == 0) {
-            context.put("message", getMessage("NoSuchOperationData"));
-            return false;
+            model.addAttribute("message", getMessage("NoSuchOperationData"));
+            model.addAttribute("success", false);
+            model.addAttribute("redirect", "../../owners");
+            return "governance/screen/redirect";
         }
         if (!super.currentUser.hasServicePrivilege(service)) {
-            context.put("message", getMessage("HaveNoServicePrivilege", service));
-            return false;
+            model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
+            model.addAttribute("success", false);
+            model.addAttribute("redirect", "../../owners");
+            return "governance/screen/redirect";
         }
         ownerService.deleteOwner(owner);
-        return true;
+        model.addAttribute("success", true);
+        model.addAttribute("redirect", "../../owners");
+        return "governance/screen/redirect";
     }
 
 }

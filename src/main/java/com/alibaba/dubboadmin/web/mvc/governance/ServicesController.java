@@ -61,32 +61,6 @@ public class ServicesController extends BaseController {
     @Autowired
     private OverrideService overrideService;
 
-    @Autowired
-    private ProvidersController providers;
-
-    @Autowired
-    private ConsumersController consumers;
-
-    @Autowired
-    private ApplicationsController applications;
-
-    @Autowired
-    private RoutesController routes;
-
-    @Autowired
-    private OverridesController overrides;
-
-    @Autowired
-    private AccessesController accesses;
-
-    @Autowired
-    private WeightsController weights;
-
-    @Autowired
-    private LoadbalancesController loadbalances;
-
-    @Autowired
-    private OwnersController owners;
 
     @RequestMapping("")
     public String index(HttpServletRequest request, HttpServletResponse response, Model model) {
@@ -95,7 +69,7 @@ public class ServicesController extends BaseController {
         String service = (String)newModel.get("service");
         String application = (String)newModel.get("app");
         String address = (String)newModel.get("address");
-        String keyword = (String)newModel.get("keyword");
+        String keyword = request.getParameter("keyword");
 
         if (service == null
                 && application == null

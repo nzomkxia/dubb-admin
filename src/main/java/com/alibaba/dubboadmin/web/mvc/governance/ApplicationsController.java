@@ -71,7 +71,7 @@ public class ApplicationsController extends BaseController {
         String service = (String)newModel.get("service");
         String application = (String)newModel.get("app");
         String address = (String)newModel.get("address");
-        String keyword = (String)newModel.get("keyword");
+        String keyword = request.getParameter("keyword");
         if (service != null) {
             Set<String> applications = new TreeSet<String>();
             List<String> providerApplications = providerService.findApplicationsByServiceName(service);
@@ -109,7 +109,7 @@ public class ApplicationsController extends BaseController {
         }
         if (service == null && application == null
                 && address == null) {
-            model.addAttribute("application", "*");
+            model.addAttribute("app", "*");
         }
         Set<String> applications = new TreeSet<String>();
         List<String> providerApplications = providerService.findApplications();
