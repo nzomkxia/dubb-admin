@@ -17,9 +17,6 @@ import com.alibaba.dubboadmin.web.pulltool.Tool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 
-/**
- * @author zmx ON 2018/5/28
- */
 public class BaseController {
     protected static final Logger logger = LoggerFactory.getLogger(BaseController.class);
 

@@ -21,9 +21,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-/**
- * @author zmx ON 2018/5/24
- */
 @Controller
 public class IndexController {
 

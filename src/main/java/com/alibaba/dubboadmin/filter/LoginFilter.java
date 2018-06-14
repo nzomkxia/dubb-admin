@@ -29,9 +29,6 @@ import com.alibaba.dubboadmin.registry.common.util.Coder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/**
- * @author zmx ON 2018/5/28
- */
 @Component
 public class LoginFilter implements Filter{
 
