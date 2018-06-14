@@ -263,7 +263,7 @@ public class ConsumersController extends BaseController {
             model.addAttribute("message", getMessage("NoSuchOperationData"));
             success = false;
             model.addAttribute("success", success);
-            model.addAttribute("redirect", "governance/consumers");
+            model.addAttribute("redirect", "../../consumers");
             return "governance/screen/redirect";
         }
         List<Consumer> consumers = new ArrayList<Consumer>();
@@ -275,7 +275,7 @@ public class ConsumersController extends BaseController {
                     model.addAttribute("message", getMessage("HaveNoServicePrivilege", c.getService()));
                     success = false;
                     model.addAttribute("success", success);
-                    model.addAttribute("redirect", "governance/consumers");
+                    model.addAttribute("redirect", "../../consumers");
                     return "governance/screen/redirect";
                 }
             }
@@ -314,7 +314,7 @@ public class ConsumersController extends BaseController {
             }
         }
         model.addAttribute("success", success);
-        model.addAttribute("redirect", "governance/consumers");
+        model.addAttribute("redirect", "../../consumers");
         return "governance/screen/redirect";
     }
 

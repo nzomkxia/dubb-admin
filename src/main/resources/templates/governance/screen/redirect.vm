@@ -18,7 +18,7 @@
         <tr>
             <td align="right">#if(!$success)
                 <div class="btn_info" style="float: right; clear: left;"><a
-                        href="$rootContextPath.getURI("$redirect")">#springMessage("confirm")</a>
+                        href="$redirect">#springMessage("confirm")</a>
                 </div>#end</td>
             <td></td>
         </tr>

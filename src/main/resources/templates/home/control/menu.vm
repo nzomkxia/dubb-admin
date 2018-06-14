@@ -55,7 +55,7 @@
                         <td style="padding-left: 10px;"><img src="$rootContextPath.getURI("images/exit.png")" width="14"
                                                              height="19" border="0"/></td>
                         <td><a href="#" onclick="showConfirm('#springMessage("confirm.logout")', '#springMessage(
-                            "current.user"): $currentUser.Name', '$bucLogoutAddress'); return false;"
+                            "current.user"): $currentUser.Name', '/logout'); return false;"
                                style="color: white;">#springMessage("logout")</a></td>
                     </tr>
                 </table>
