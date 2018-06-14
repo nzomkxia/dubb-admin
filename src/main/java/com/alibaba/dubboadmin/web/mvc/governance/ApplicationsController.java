@@ -41,7 +41,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.support.BindingAwareModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * ProvidersController.
@@ -189,29 +191,39 @@ public class ApplicationsController extends BaseController {
     //    //context.put("applications", newList);
     //}
 
-    public boolean shield(Map<String, Object> context) throws Exception {
-        return mock(context, "force:return null");
+    @RequestMapping("/{ids}/shield")
+    public String shield(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        return mock(ids, "force:return null", "shield", request, response, model);
     }
 
-    public boolean tolerant(Map<String, Object> context) throws Exception {
-        return mock(context, "fail:return null");
+    @RequestMapping("/{ids}/tolerant")
+    public String tolerant(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        return mock(ids, "fail:return null", "tolerant", request, response, model);
     }
 
-    public boolean recover(Map<String, Object> context) throws Exception {
-        return mock(context, "");
+    @RequestMapping("/{ids}/recover")
+    public String recover(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        return mock(ids,  "", "recover", request, response, model);
     }
 
-    private boolean mock(Map<String, Object> context, String mock) throws Exception {
-        String service = (String) context.get("service");
-        String applications = (String) context.get("application");
+    private String mock(Long[] ids, String mock, String methodName, HttpServletRequest request,
+                         HttpServletResponse response, Model model) throws Exception {
+        prepare(request, response, model, methodName, "applications");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String service = (String) newModel.get("service");
+        String applications = (String) newModel.get("app");
         if (service == null || service.length() == 0
                 || applications == null || applications.length() == 0) {
-            context.put("message", getMessage("NoSuchOperationData"));
-            return false;
+            model.addAttribute("message", getMessage("NoSuchOperationData"));
+            model.addAttribute("success", false);
+            model.addAttribute("redirect", "../../applications");
+            return "governance/screen/redirect";
         }
         if (!super.currentUser.hasServicePrivilege(service)) {
-            context.put("message", getMessage("HaveNoServicePrivilege", service));
-            return false;
+            model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
+            model.addAttribute("success", false);
+            model.addAttribute("redirect", "../../applications");
+            return "governance/screen/redirect";
         }
         for (String application : SPACE_SPLIT_PATTERN.split(applications)) {
             List<Override> overrides = overrideService.findByServiceAndApplication(service, application);
@@ -244,30 +256,42 @@ public class ApplicationsController extends BaseController {
                 overrideService.saveOverride(override);
             }
         }
-        return true;
+        model.addAttribute("success", true);
+        model.addAttribute("redirect", "../../applications");
+        return "governance/screen/redirect";
     }
 
-    public boolean allshield(Map<String, Object> context) throws Exception {
-        return allmock(context, "force:return null");
+    @RequestMapping("/allshield")
+    public String allshield(@RequestParam(required = false) String service, HttpServletRequest request,
+                             HttpServletResponse response, Model model) throws Exception {
+        return allmock(service, "force:return null", "allshield", request, response, model);
     }
 
-    public boolean alltolerant(Map<String, Object> context) throws Exception {
-        return allmock(context, "fail:return null");
+    @RequestMapping("/alltolerant")
+    public String alltolerant(@RequestParam(required = false) String service, HttpServletRequest request,
+                               HttpServletResponse response, Model model) throws Exception {
+        return allmock(service, "fail:return null", "alltolerant", request, response, model);
     }
 
-    public boolean allrecover(Map<String, Object> context) throws Exception {
-        return allmock(context, "");
+    @RequestMapping("/allrecover")
+    public String allrecover(@RequestParam(required = false) String service, HttpServletRequest request,
+                              HttpServletResponse response, Model model) throws Exception {
+        return allmock(service, "", "allrecover", request, response, model);
     }
 
-    private boolean allmock(Map<String, Object> context, String mock) throws Exception {
-        String service = (String) context.get("service");
+    private String allmock(String service, String mock, String methodName, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        prepare(request, response, model, methodName, "applications");
         if (service == null || service.length() == 0) {
-            context.put("message", getMessage("NoSuchOperationData"));
-            return false;
+            model.addAttribute("message", getMessage("NoSuchOperationData"));
+            model.addAttribute("success", false);
+            model.addAttribute("redirect", "../../applications");
+            return "governance/screen/redirect";
         }
         if (!super.currentUser.hasServicePrivilege(service)) {
-            context.put("message", getMessage("HaveNoServicePrivilege", service));
-            return false;
+            model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
+            model.addAttribute("success", false);
+            model.addAttribute("redirect", "../../applications");
+            return "governance/screen/redirect";
         }
         List<Override> overrides = overrideService.findByService(service);
         Override allOverride = null;
@@ -304,7 +328,9 @@ public class ApplicationsController extends BaseController {
             override.setOperatorAddress(operatorAddress);
             overrideService.saveOverride(override);
         }
-        return true;
+        model.addAttribute("success", false);
+        model.addAttribute("redirect", "../../applications");
+        return "governance/screen/redirect";
     }
 
 }

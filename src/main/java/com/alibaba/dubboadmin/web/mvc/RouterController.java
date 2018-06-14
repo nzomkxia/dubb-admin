@@ -1,5 +1,6 @@
 package com.alibaba.dubboadmin.web.mvc;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
@@ -91,7 +92,6 @@ public class RouterController {
                                 @PathVariable("service") String service, @PathVariable("type") String type,
                                 @PathVariable("action") String action, HttpServletRequest request,
                                 HttpServletResponse response, Model model) {
-        String method = request.getMethod();
         for (Map.Entry<String, String> entry : param.entrySet()) {
             System.out.println("key: " + entry.getKey());
             System.out.println("value: " + entry.getValue());
@@ -106,24 +106,48 @@ public class RouterController {
                                       @PathVariable("type") String type, @PathVariable("id") String id,
                                       @PathVariable("action") String action, HttpServletRequest request, HttpServletResponse response, Model model) {
         String method = request.getMethod();
+        String app = null;
         System.out.println("type: " + type);
         System.out.println("action: " + action);
         System.out.println("method: " + method);
         for (Map.Entry<String, Object> entry : param.entrySet()) {
+            if (entry.getKey().equals("application")) {
+                app = (String)entry.getValue();
+            }
             System.out.println("key: " + entry.getKey());
             System.out.println("value: " + entry.getValue());
         }
-        return appActionWithIdandAction(null, service, type, id, action, request, response, model);
+        return appActionWithIdandAction(app, service, type, id, action, request, response, model);
     }
 
-
     // app mapping all execute goes here
+    //@RequestMapping("/governance/applications/{app}/services/{ids}/{action}")
+    //public String serviceActionWithApp(@PathVariable("app") String app, @PathVariable("ids") String ids,
+    //                                   @PathVariable("type") String type, HttpServletRequest request,
+    //                                   HttpServletResponse response, Model model) {
+    //    return "";
+    //}
+
     @RequestMapping("/governance/applications/{app}/services/{service}/{type}")
     public String appRouter(@PathVariable("app") String app, @PathVariable("service") String service,
                             @PathVariable("type") String type, HttpServletRequest request,
                             HttpServletResponse response, Model model) {
         if (app != null) {
             model.addAttribute("app", app);
+        }
+        if (StringUtils.isNumeric(service)) {
+            //service action, shield, recover..
+            Long[] ids = new Long[1];
+            ids[0] = Long.valueOf(service);
+            model.addAttribute("service", request.getParameter("service"));
+            try {
+                Method m = servicesController.getClass().getDeclaredMethod(type, Long[].class, HttpServletRequest.class,
+                    HttpServletResponse.class, Model.class);
+                Object result = m.invoke(servicesController, ids, request, response, model);
+                return (String) result;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         if (service != null) {
             model.addAttribute("service", service);

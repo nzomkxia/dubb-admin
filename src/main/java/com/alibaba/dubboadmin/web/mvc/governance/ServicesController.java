@@ -42,6 +42,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.support.BindingAwareModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
@@ -158,93 +159,42 @@ public class ServicesController extends BaseController {
         return "governance/screen/services/index";
     }
 
-    //@RequestMapping("/{service}/{type}")
-    //public String route(@PathVariable("service") String service, @PathVariable("type") String type,
-    //                    @RequestParam(required = false) String app,
-    //                    @RequestParam(required = false) String address,
-    //                    HttpServletRequest request, HttpServletResponse response, Model model) {
-    //    if (app != null) {
-    //        model.addAttribute("app", app);
-    //    }
-    //    if (address != null) {
-    //        model.addAttribute("address", address);
-    //    }
-    //    model.addAttribute("service", service);
-    //    try {
-    //        Field controllerField = getClass().getDeclaredField(type);
-    //        Object controllerValue = controllerField.get(this);
-    //        Method method = controllerValue.getClass().getDeclaredMethod("index", String.class, String.class, String.class,
-    //            String.class, HttpServletRequest.class, HttpServletResponse.class, Model.class);
-    //        return (String)method.invoke(controllerValue, service, app, address, null, request, response, model);
-    //    } catch (Exception e) {
-    //        e.printStackTrace();
-    //        return "governance/screen/services/index";
-    //    }
-    //}
 
-    //@RequestMapping("/{service}/{type}/{action}")
-    //public String actionroute(@PathVariable("service") String service, @PathVariable("type") String type,
-    //                          @PathVariable("aciton") String action, @RequestParam(required = false) String app,
-    //                          @RequestParam(required = false) String address,
-    //                          HttpServletRequest request, HttpServletResponse response, Model model) {
-    //    if (app != null) {
-    //        model.addAttribute("app", app);
-    //    }
-    //    if (address != null) {
-    //        model.addAttribute("address", address);
-    //    }
-    //    Field controllerField = getClass().getDeclaredField(type);
-    //    Object controllerValue = controllerField.get(this);
-    //    Method[] methods = controllerValue.getClass().getDeclaredMethods();
-    //    Method m = null;
-    //    for (Method method : methods) {
-    //        if (method.getName().equals(action)) {
-    //           m = method;
-    //           break;
-    //        }
-    //    }
-    //    if (m != null) {
-    //    }
-    //}
-
-    //@RequestMapping("/{service}/{type}/{id}/{action}")
-    //public String actionroute(@PathVariable("service") String service, @PathVariable("type") String type,
-    //                          @PathVariable("id") Long id,
-    //                          @PathVariable("aciton") String action, @RequestParam(required = false) String app,
-    //                          @RequestParam(required = false) String address,
-    //                          HttpServletRequest request, HttpServletResponse response, Model model) {
-    //    if (app != null) {
-    //        model.addAttribute("app", app);
-    //    }
-    //    if (address != null) {
-    //        model.addAttribute("address", address);
-    //    }
-    //}
-
-    public boolean shield(Map<String, Object> context) throws Exception {
-        return mock(context, "force:return null");
+    @RequestMapping("/{ids}/shield")
+    public String shield(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        return mock(ids, "force:return null", "shield", request, response, model);
     }
 
-    public boolean tolerant(Map<String, Object> context) throws Exception {
-        return mock(context, "fail:return null");
+    @RequestMapping("/{ids}/tolerant")
+    public String tolerant(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        return mock(ids, "fail:return null", "tolerant", request, response, model);
     }
 
-    public boolean recover(Map<String, Object> context) throws Exception {
-        return mock(context, "");
+    @RequestMapping("/{ids}/recover")
+    public String recover(@PathVariable("ids") Long[] ids, HttpServletRequest request, HttpServletResponse response, Model model) throws Exception {
+        return mock(ids,  "", "recover", request, response, model);
     }
 
-    private boolean mock(Map<String, Object> context, String mock) throws Exception {
-        String services = (String) context.get("service");
-        String application = (String) context.get("application");
+    private String mock(Long[] ids, String mock, String methodName, HttpServletRequest request,
+                        HttpServletResponse response, Model model) throws Exception {
+        prepare(request, response, model, methodName, "services");
+        BindingAwareModelMap newModel = (BindingAwareModelMap)model;
+        String services = (String) newModel.get("service");
+        String application = (String) newModel.get("app");
+
         if (services == null || services.length() == 0
                 || application == null || application.length() == 0) {
-            context.put("message", getMessage("NoSuchOperationData"));
-            return false;
+            model.addAttribute("message", getMessage("NoSuchOperationData"));
+            model.addAttribute("success", false);
+            model.addAttribute("redirect", "../../services");
+            return "governance/screen/redirect";
         }
         for (String service : SPACE_SPLIT_PATTERN.split(services)) {
             if (!super.currentUser.hasServicePrivilege(service)) {
-                context.put("message", getMessage("HaveNoServicePrivilege", service));
-                return false;
+                model.addAttribute("message", getMessage("HaveNoServicePrivilege", service));
+                model.addAttribute("success", false);
+                model.addAttribute("redirect", "../../services");
+                return "governance/screen/redirect";
             }
         }
         for (String service : SPACE_SPLIT_PATTERN.split(services)) {
@@ -278,7 +228,9 @@ public class ServicesController extends BaseController {
                 overrideService.saveOverride(override);
             }
         }
-        return true;
+        model.addAttribute("success", true);
+        model.addAttribute("redirect", "../../services");
+        return "governance/screen/redirect";
     }
 
 }
