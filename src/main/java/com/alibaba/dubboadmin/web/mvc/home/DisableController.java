@@ -38,6 +38,7 @@ public class DisableController extends ShellController {
         this.providerService = providerDAO;
     }
 
+    @Override
     protected String doExecute(Map<String, Object> context) throws Exception {
         String address = request.getParameter("provider");
         if (address == null || address.length() == 0) {
